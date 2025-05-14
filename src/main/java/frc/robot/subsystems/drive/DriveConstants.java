@@ -79,12 +79,14 @@ public class DriveConstants {
   public static final boolean turnInverted = false;
   public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 12.8; // SDS MK4
-  public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
+  public static final DCMotor turnGearbox = DCMotor.getNEO(1);
 
   // Turn encoder configuration
   public static final boolean turnEncoderInverted = true;
-  public static final double turnEncoderPositionFactor = 2 * Math.PI; // Rotations -> Radians
-  public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
+  public static final double turnEncoderPositionFactor =
+      (2 * Math.PI) / turnMotorReduction; // Rotations -> Radians
+  public static final double turnEncoderVelocityFactor =
+      (2 * Math.PI) / 60.0 / turnMotorReduction; // RPM -> Rad/Sec
 
   // Turn PID configuration
   public static final double turnKp = 2.0;
