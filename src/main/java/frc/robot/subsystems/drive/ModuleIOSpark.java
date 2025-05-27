@@ -116,7 +116,7 @@ public class ModuleIOSpark implements ModuleIO {
     driveEncoder = driveSpark.getEncoder();
     turnEncoder = turnSpark.getEncoder();
 
-    //turnAbsoluteEncoder.optimizeBusUtilization();
+    // turnAbsoluteEncoder.optimizeBusUtilization();
 
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
@@ -189,9 +189,9 @@ public class ModuleIOSpark implements ModuleIO {
         () ->
             turnSpark.configure(
                 turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-    //tryUntilOk(
+    // tryUntilOk(
     //   turnSpark, 5, () -> turnEncoder.setPosition(getAbsTurningPosition(.25).getRotations()));
-    
+
     // Configure CANCoder
     CANcoderConfiguration cancoderConfig = new CANcoderConfiguration();
     cancoderConfig.MagnetSensor.MagnetOffset = 0; // This is done later in the code
@@ -210,17 +210,15 @@ public class ModuleIOSpark implements ModuleIO {
         SparkOdometryThread.getInstance().registerSignal(driveSpark, driveEncoder::getPosition);
     turnPositionQueue =
         SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
-  // Initialize turn relative encoder
-  tryUntilOk(
-    turnSpark,
-    5,
-    () ->
-        turnEncoder.setPosition(
-            Units.rotationsToRadians(
-                turnEncoderAbsolute.getAbsolutePosition().getValueAsDouble())));
- }
-
-
+    // Initialize turn relative encoder
+    tryUntilOk(
+        turnSpark,
+        5,
+        () ->
+            turnEncoder.setPosition(
+                Units.rotationsToRadians(
+                    turnEncoderAbsolute.getAbsolutePosition().getValueAsDouble())));
+  }
 
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
@@ -310,7 +308,7 @@ public class ModuleIOSpark implements ModuleIO {
     }
 
     return new Rotation2d(absPositonRotations);
-  
+
   }
   */
 }
