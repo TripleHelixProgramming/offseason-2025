@@ -119,8 +119,6 @@ public class ModuleIOSpark implements ModuleIO {
     driveEncoder = driveSpark.getEncoder();
     turnEncoder = turnSpark.getEncoder();
 
-    // turnAbsoluteEncoder.optimizeBusUtilization();
-
     driveController = driveSpark.getClosedLoopController();
     turnController = turnSpark.getClosedLoopController();
 
@@ -156,7 +154,7 @@ public class ModuleIOSpark implements ModuleIO {
         5,
         () ->
             driveSpark.configure(
-                driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+                driveConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters));
     tryUntilOk(driveSpark, 5, () -> driveEncoder.setPosition(0.0));
 
     // Configure turn motor
@@ -191,9 +189,7 @@ public class ModuleIOSpark implements ModuleIO {
         5,
         () ->
             turnSpark.configure(
-                turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-    // tryUntilOk(
-    //   turnSpark, 5, () -> turnEncoder.setPosition(getAbsTurningPosition(.25).getRotations()));
+                turnConfig, ResetMode.kResetSafeParameters, PersistMode.kNoPersistParameters));
 
     // Configure CANCoder
     CANcoderConfiguration cancoderConfig = new CANcoderConfiguration();
@@ -206,6 +202,7 @@ public class ModuleIOSpark implements ModuleIO {
     turnPositionAbsolute = turnEncoderAbsolute.getPosition();
 
     BaseStatusSignal.setUpdateFrequencyForAll(50.0, turnPositionAbsolute);
+    // turnEncoderAbsolute.optimizeBusUtilization();
 
     // Create odometry queues
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
@@ -213,6 +210,7 @@ public class ModuleIOSpark implements ModuleIO {
         SparkOdometryThread.getInstance().registerSignal(driveSpark, driveEncoder::getPosition);
     turnPositionQueue =
         SparkOdometryThread.getInstance().registerSignal(turnSpark, turnEncoder::getPosition);
+    
     // Initialize turn relative encoder
     tryUntilOk(
         turnSpark,
