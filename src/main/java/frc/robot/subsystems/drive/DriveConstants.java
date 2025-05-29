@@ -19,6 +19,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants.MotorConstants.NEOVortexConstants;
 
 public class DriveConstants {
   public static final double maxSpeedMetersPerSec = 3.0; // Commented out on reefscape bot
@@ -59,7 +60,6 @@ public class DriveConstants {
   public static final int backRightTurnAbsoluteEncoderCanId = 31;
 
   // Drive motor configuration
-  public static final int driveMotorCurrentLimit = 50;
   public static final double wheelRadiusMeters = 0.0235;
   public static final double driveMotorReduction = 6.75; // SDS MK4 L2
   public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
@@ -82,7 +82,6 @@ public class DriveConstants {
 
   // Turn motor configuration
   public static final boolean turnInverted = false;
-  public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 12.8; // SDS MK4
   public static final DCMotor turnGearbox = DCMotor.getNEO(1);
 
@@ -114,7 +113,7 @@ public class DriveConstants {
               maxSpeedMetersPerSec,
               wheelCOF,
               driveGearbox.withReduction(driveMotorReduction),
-              driveMotorCurrentLimit,
+              NEOVortexConstants.kDefaultCurrentLimit,
               1),
           moduleTranslations);
 }
