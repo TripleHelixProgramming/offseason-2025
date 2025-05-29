@@ -41,6 +41,7 @@ import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
+import frc.robot.Constants.RobotConstants;
 import java.util.Queue;
 import java.util.function.DoubleSupplier;
 
@@ -126,7 +127,7 @@ public class ModuleIOSpark implements ModuleIO {
     driveConfig
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(driveMotorCurrentLimit)
-        .voltageCompensation(12.0);
+        .voltageCompensation(RobotConstants.kNominalVoltage);
     driveConfig
         .encoder
         .positionConversionFactor(driveEncoderPositionFactor)
@@ -162,7 +163,7 @@ public class ModuleIOSpark implements ModuleIO {
         .inverted(turnInverted)
         .idleMode(IdleMode.kBrake)
         .smartCurrentLimit(turnMotorCurrentLimit)
-        .voltageCompensation(12.0);
+        .voltageCompensation(RobotConstants.kNominalVoltage);
     turnConfig
         .encoder
         .positionConversionFactor(turnEncoderPositionFactor)

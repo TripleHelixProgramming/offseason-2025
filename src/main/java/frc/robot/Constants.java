@@ -34,4 +34,8 @@ public final class Constants {
     /** Replaying from a log file. */
     REPLAY
   }
+
+  public final class RobotConstants {
+    public static final double kNominalVoltage = 12.0;
+  }
 }
