@@ -24,15 +24,15 @@ import frc.robot.Constants.MotorConstants.NEOVortexConstants;
 public class DriveConstants {
   public static final double maxSpeedMetersPerSec = 3.0; // Commented out on reefscape bot
   public static final double odometryFrequency = 100.0; // Hz
-  public static final double trackWidth = Units.inchesToMeters(21);
   public static final double wheelBase = Units.inchesToMeters(27);
+  public static final double trackWidth = Units.inchesToMeters(21);
   public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);
   public static final Translation2d[] moduleTranslations =
       new Translation2d[] {
-        new Translation2d(trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0)
+        new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
+        new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
+        new Translation2d(-wheelBase / 2.0, trackWidth / 2.0),
+        new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0)
       };
 
   // Zeroed rotation values for each module, see setup instructions
