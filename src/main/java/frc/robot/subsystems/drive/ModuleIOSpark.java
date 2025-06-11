@@ -217,8 +217,7 @@ public class ModuleIOSpark implements ModuleIO {
         5,
         () ->
             turnEncoder.setPosition(
-                Units.rotationsToRadians(
-                    turnEncoderAbsolute.getAbsolutePosition().getValueAsDouble())));
+                new Rotation2d(turnEncoderAbsolute.getAbsolutePosition().getValue()).getRadians()));
   }
 
   @Override

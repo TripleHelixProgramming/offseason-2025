@@ -36,10 +36,10 @@ public class DriveConstants {
       };
 
   // Zeroed rotation values for each module, see setup instructions
-  public static final Rotation2d frontLeftZeroRotation = new Rotation2d(-2.2887);
-  public static final Rotation2d frontRightZeroRotation = new Rotation2d(6.5440);
-  public static final Rotation2d backLeftZeroRotation = new Rotation2d(1.4450);
-  public static final Rotation2d backRightZeroRotation = new Rotation2d(-1.8484);
+  public static final Rotation2d frontLeftZeroRotation = new Rotation2d(2.287);
+  public static final Rotation2d frontRightZeroRotation = new Rotation2d(-0.273);
+  public static final Rotation2d backLeftZeroRotation = new Rotation2d(-1.399);
+  public static final Rotation2d backRightZeroRotation = new Rotation2d(1.846);
 
   // Device CAN IDs
   public static final int gyroCanId = 0;
@@ -85,8 +85,10 @@ public class DriveConstants {
   public static final double turnMotorReduction = 12.8; // SDS MK4
   public static final DCMotor turnGearbox = DCMotor.getNEO(1);
 
-  // Turn encoder configuration
-  public static final boolean turnEncoderInverted = true;
+  // Absolute turn encoder configuration
+  public static final boolean turnEncoderInverted = false;
+
+  // Relative turn encoder configuration
   public static final double turnEncoderPositionFactor =
       (2 * Math.PI) / turnMotorReduction; // Rotations -> Radians
   public static final double turnEncoderVelocityFactor =
