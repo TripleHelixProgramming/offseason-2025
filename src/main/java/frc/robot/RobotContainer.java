@@ -13,15 +13,14 @@
 
 package frc.robot;
 
+import choreo.auto.AutoFactory;
+import choreo.auto.AutoRoutine;
+import choreo.auto.AutoTrajectory;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
-
-import choreo.auto.AutoFactory;
-import choreo.auto.AutoRoutine;
-import choreo.auto.AutoTrajectory;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -95,13 +94,14 @@ public class RobotContainer {
         break;
     }
 
-    autoFactory = new AutoFactory(
+    autoFactory =
+        new AutoFactory(
             drive::getPose, // A function that returns the current robot pose
             drive::setPose, // A function that resets the current robot pose to the provided Pose2d
-            drive::followTrajectory, // The drive subsystem trajectory follower 
-            false, // If alliance flipping should be enabled 
+            drive::followTrajectory, // The drive subsystem trajectory follower
+            false, // If alliance flipping should be enabled
             drive // The drive subsystem
-        );
+            );
 
     // Set up auto routines
     autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
@@ -233,14 +233,8 @@ public class RobotContainer {
     AutoTrajectory moveStraight = routine.trajectory("driveToMiddle");
 
     // When the routine begins, reset odometry and start the first trajectory (1)
-    routine.active().onTrue(
-        Commands.sequence(
-            moveStraight.resetOdometry(),
-            moveStraight.cmd()
-        )
-    );
+    routine.active().onTrue(Commands.sequence(moveStraight.resetOdometry(), moveStraight.cmd()));
 
     return routine;
+  }
 }
-}
-
