@@ -13,6 +13,7 @@
 
 package frc.robot;
 
+import choreo.auto.AutoChooser;
 import choreo.auto.AutoFactory;
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
@@ -26,10 +27,11 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -38,7 +40,6 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import java.util.List;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -50,12 +51,10 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final AutoFactory autoFactory;
+  private final AutoChooser autoChooser;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
-
-  // Dashboard inputs
-  private final LoggedDashboardChooser<Command> autoChooser;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -103,29 +102,20 @@ public class RobotContainer {
             drive // The drive subsystem
             );
 
-    // Set up auto routines
-    autoChooser = new LoggedDashboardChooser<>("Auto Choices", AutoBuilder.buildAutoChooser());
+    // Create the auto chooser
+    autoChooser = new AutoChooser();
 
-    // Set up SysId routines
-    autoChooser.addOption(
-        "Drive Wheel Radius Characterization", DriveCommands.wheelRadiusCharacterization(drive));
-    autoChooser.addOption(
-        "Drive Simple FF Characterization", DriveCommands.feedforwardCharacterization(drive));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Forward)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Quasistatic Reverse)",
-        drive.sysIdQuasistatic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Forward)", drive.sysIdDynamic(SysIdRoutine.Direction.kForward));
-    autoChooser.addOption(
-        "Drive SysId (Dynamic Reverse)", drive.sysIdDynamic(SysIdRoutine.Direction.kReverse));
-    autoChooser.addOption("Drive Path on the Fly", getPathOnTheFlyCommand());
-    autoChooser.addOption("Drive Path from file", getPathFromFileCommand());
+    // Add options to the chooser
+    autoChooser.addRoutine("Move Forward 1m", this::moveStraight);
+
+    // Put the auto chooser on the dashboard
+    SmartDashboard.putData(autoChooser);
 
     // Configure the button bindings
     configureButtonBindings();
+
+    // Schedule the selected auto during the autonomous period
+    RobotModeTriggers.autonomous().whileTrue(autoChooser.selectedCommandScheduler());
   }
 
   /**
@@ -174,7 +164,7 @@ public class RobotContainer {
    * @return the command to run in autonomous
    */
   public Command getAutonomousCommand() {
-    return autoChooser.get();
+    return autoChooser.selectedCommand();
   }
 
   public Command getPathOnTheFlyCommand() {
@@ -227,10 +217,10 @@ public class RobotContainer {
   }
 
   public AutoRoutine moveStraight() {
-    AutoRoutine routine = autoFactory.newRoutine("taxi");
+    AutoRoutine routine = autoFactory.newRoutine("moveForward1m");
 
     // Load the routine's trajectories
-    AutoTrajectory moveStraight = routine.trajectory("driveToMiddle");
+    AutoTrajectory moveStraight = routine.trajectory("moveForward1m");
 
     // When the routine begins, reset odometry and start the first trajectory (1)
     routine.active().onTrue(Commands.sequence(moveStraight.resetOdometry(), moveStraight.cmd()));
