@@ -173,6 +173,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
+    autoSelector.disabledPeriodic();
   }
 
   /** This function is called once when autonomous mode is enabled. */

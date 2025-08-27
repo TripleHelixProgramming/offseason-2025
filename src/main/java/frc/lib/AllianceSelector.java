@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import frc.robot.Constants.AutoConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class AllianceSelector {
@@ -18,7 +17,7 @@ public class AllianceSelector {
   private BooleanEvent agreementInAllianceInputs;
 
   public AllianceSelector(int port) {
-    io = new AllianceSelectorIO(AutoConstants.kAllianceColorSelectorPort);
+    io = new AllianceSelectorIO(port);
     changedAlliance = new BooleanEvent(eventLoop, () -> inputs.allianceChanged);
     agreementInAllianceInputs = new BooleanEvent(eventLoop, () -> inputs.agreementInAllianceInputs);
   }
@@ -56,6 +55,5 @@ public class AllianceSelector {
     eventLoop.poll();
     io.updateInputs(inputs);
     Logger.processInputs("AllianceSelector", inputs);
-    Logger.recordOutput("AllianceSelector", getAllianceColor().name());
   }
 }
