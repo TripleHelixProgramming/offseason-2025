@@ -179,6 +179,7 @@ public class Robot extends LoggedRobot {
   /** This function is called once when autonomous mode is enabled. */
   @Override
   public void autonomousInit() {
+    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive));
     autoSelector.scheduleAuto();
   }
 

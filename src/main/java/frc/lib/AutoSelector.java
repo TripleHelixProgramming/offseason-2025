@@ -89,9 +89,12 @@ public class AutoSelector implements Supplier<Optional<AutoOption>> {
           ao.getInitialPose()
               .ifPresentOrElse(
                   pose -> Logger.recordOutput("AutoSelector/AutonomousInitialPose", pose),
-                  () -> {});
+                  () -> Logger.recordOutput("AutoSelector/AutonomousInitialPose", Pose2d.kZero));
         },
-        () -> Logger.recordOutput("AutoSelector/SelectedAutoMode", "No auto mode assigned"));
+        () -> {
+          Logger.recordOutput("AutoSelector/SelectedAutoMode", "No auto mode assigned");
+          Logger.recordOutput("AutoSelector/AutonomousInitialPose", Pose2d.kZero);
+        });
   }
 
   public Optional<Pose2d> getInitialPose() {
