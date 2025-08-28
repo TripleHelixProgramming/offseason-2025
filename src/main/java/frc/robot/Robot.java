@@ -204,14 +204,6 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     autoSelector.cancelAuto();
-
-    // Drive in field-relative mode by default
-    drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -operator.getLeftY(),
-            () -> -operator.getLeftX(),
-            () -> -operator.getRightX()));
   }
 
   /** This function is called periodically during operator control. */
@@ -265,25 +257,27 @@ public class Robot extends LoggedRobot {
     configureOperatorButtonBindings();
   }
 
-  private void configureDriverButtonBindings() {}
-
-  private void configureOperatorButtonBindings() {
-    // Lock to 0° when A button is held
-    operator
-        .a()
+  private void configureDriverButtonBindings() {
+    // Drive in field-relative mode while switch E is up
+    driver.EUp()
         .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
+            DriveCommands.fieldRelativeJoystickDrive(
                 drive,
-                () -> -operator.getLeftY(),
-                () -> -operator.getLeftX(),
-                () -> Rotation2d.kZero));
+                () -> -driver.getRightYAxis(),
+                () -> -driver.getRightXAxis(),
+                () -> -driver.getLeftXAxis()));
 
-    // Switch to X pattern when X button is pressed
-    operator.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    // Drive in robot-relative mode while switch E is down
+    driver.EDown()
+        .whileTrue(
+            DriveCommands.robotRelativeJoystickDrive(
+                drive,
+                () -> -driver.getRightYAxis(),
+                () -> -driver.getRightXAxis(),
+                () -> -driver.getLeftXAxis()));
 
-    // Reset gyro to 0° when B button is pressed
-    operator
-        .b()
+    // Reset gyro to 0° when button G is pressed
+    driver.GIn()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -291,7 +285,21 @@ public class Robot extends LoggedRobot {
                             new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
                     drive)
                 .ignoringDisable(true));
+
+    // Lock to 0° while button A is held
+    driver.AIn()
+        .whileTrue(
+            DriveCommands.joystickDriveAtFixedOrientation(
+                drive,
+                () -> -driver.getRightYAxis(),
+                () -> -driver.getRightXAxis(),
+                () -> Rotation2d.kZero));
+
+    // Switch to X pattern when button D is pressed
+    driver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
+
+  private void configureOperatorButtonBindings() {}
 
   public void configureAutoOptions() {
     autoSelector.addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(drive)));
