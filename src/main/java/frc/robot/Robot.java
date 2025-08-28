@@ -23,14 +23,19 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
+import frc.lib.CommandZorroController;
+import frc.lib.ControllerPatroller;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
@@ -63,10 +68,12 @@ public class Robot extends LoggedRobot {
           AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
 
   // Subsystems
-  private final Drive drive;
+  private Drive drive;
 
-  // Controller
-  private final CommandXboxController controller = new CommandXboxController(0);
+  // Controllers
+  private CommandZorroController driver;
+  private CommandXboxController operator;
+  private Notifier controllerChecker;
 
   public Robot() {
     // Record metadata
@@ -143,6 +150,12 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
+    controllerChecker = new Notifier(this::checkControllers);
+    RobotModeTriggers.disabled()
+        .whileTrue(
+            new StartEndCommand(
+                () -> controllerChecker.startPeriodic(0.1), () -> controllerChecker.stop()));
+
     configureButtonBindings();
     configureAutoOptions();
   }
@@ -196,9 +209,9 @@ public class Robot extends LoggedRobot {
     drive.setDefaultCommand(
         DriveCommands.joystickDrive(
             drive,
-            () -> -controller.getLeftY(),
-            () -> -controller.getLeftX(),
-            () -> -controller.getRightX()));
+            () -> -operator.getLeftY(),
+            () -> -operator.getLeftX(),
+            () -> -operator.getRightX()));
   }
 
   /** This function is called periodically during operator control. */
@@ -224,6 +237,13 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {}
 
+  private void checkControllers() {
+    if (ControllerPatroller.getInstance().controllersChanged()) {
+      // Reset the joysticks & button mappings.
+      configureButtonBindings();
+    }
+  }
+
   /**
    * Use this method to define your button->command mappings. Buttons can be created by
    * instantiating a {@link GenericHID} or one of its subclasses ({@link
@@ -231,21 +251,38 @@ public class Robot extends LoggedRobot {
    * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
    */
   private void configureButtonBindings() {
+    // Clear any active buttons.
+    CommandScheduler.getInstance().getActiveButtonLoop().clear();
+
+    var cp = ControllerPatroller.getInstance();
+
+    // We use two different types of controllers - Zorro & Xbox.
+    // Create Command*Controller objects of the specific types.
+    driver = new CommandZorroController(cp.findDriverPort());
+    operator = new CommandXboxController(cp.findOperatorPort());
+
+    configureDriverButtonBindings();
+    configureOperatorButtonBindings();
+  }
+
+  private void configureDriverButtonBindings() {}
+
+  private void configureOperatorButtonBindings() {
     // Lock to 0° when A button is held
-    controller
+    operator
         .a()
         .whileTrue(
             DriveCommands.joystickDriveAtAngle(
                 drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
+                () -> -operator.getLeftY(),
+                () -> -operator.getLeftX(),
                 () -> Rotation2d.kZero));
 
     // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    operator.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
 
     // Reset gyro to 0° when B button is pressed
-    controller
+    operator
         .b()
         .onTrue(
             Commands.runOnce(
