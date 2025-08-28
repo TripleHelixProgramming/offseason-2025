@@ -2,10 +2,8 @@ package frc.robot.auto;
 
 import choreo.auto.AutoRoutine;
 import choreo.auto.AutoTrajectory;
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
-import java.util.Optional;
 
 public class R_MoveStraight extends AutoMode {
 
@@ -25,8 +23,8 @@ public class R_MoveStraight extends AutoMode {
   }
 
   @Override
-  public Optional<Pose2d> getInitialPose() {
-    return trajectory.getInitialPose();
+  public AutoTrajectory getInitialTrajectory() {
+    return trajectory;
   }
 
   @Override
