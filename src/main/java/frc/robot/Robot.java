@@ -233,10 +233,6 @@ public class Robot extends LoggedRobot {
     controllerSelector.add(
         new ControllerBinding<>(
             secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
-    controllerSelector.add(
-        new ControllerBinding<>(
-            secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver),
-        new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
   }
 
   private void bindPrimaryDriver() {

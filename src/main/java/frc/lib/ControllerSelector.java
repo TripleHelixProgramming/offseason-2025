@@ -56,16 +56,25 @@ public class ControllerSelector {
 
   private void rebindControlPanel() {
     // Filter the stream of control panel bindings for the first exact match where:
-    //  * The correct number of controllers exist
-    //  * Controllers are of the correct type
-    //  * Controllers are at the correct port
+    //  * The given number of controllers are connected
+    //  * Connected controllers are of the given type
+    //  * Connected controllers are at the given port
     //
     // If no exact matches are found, then assume they are in the wrong ports.
     // Filter the stream of control panel bindings for the first match where:
-    //  * The correct number of controllers exist
-    //  * Controllers are of the correct type
+    //  * The given number of controllers are connected
+    //  * Connected controllers are of the given type
+    // 
+    // In the case where the driver and operator controller are the same type,
+    // and exactly 2 of these devices are plugged into the given ports, then
+    // assume they are plugged in correctly and assign their functionality according
+    // to the given port #s.
+    // 
+    // In the case where the driver and operator controller are the same type,
+    // but there are NOT exactly 2 of these devices connected, or they are NOT plugged
+    // into the given ports, then do not bind any commands.
     //
-    // Then, for both the driver and operator controller (if one exists), instantiate
-    // an HID device of the correct type, and bind its buttons
+    // Then, for each of the controllers (assuming they exist), instantiate
+    // an HID device of the correct type at the port, and bind its commands.
   }
 }
