@@ -115,13 +115,13 @@ public class ControllerPatroller {
 
   public int findDriverPort() {
     GenericHID driver =
-        get(Constants.kDriverControllerNames, OIConstants.kDefaultDriverControllerPort);
+        get(Constants.kDriverControllerNames, OIConstants.kDefaultDriverPort);
     return driver.getPort();
   }
 
   public int findOperatorPort() {
     GenericHID op =
-        get(Constants.kOperatorControllerNames, OIConstants.kDefaultOperatorControllerPort);
+        get(Constants.kOperatorControllerNames, OIConstants.kDefaultOperatorPort);
     return op.getPort();
   }
 }

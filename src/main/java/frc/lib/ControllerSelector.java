@@ -19,11 +19,11 @@ public class ControllerSelector implements Supplier<Optional<ControllerOption>> 
         controllerSelectionChanged = new BooleanEvent(eventLoop, () -> updateControllers());
     }
 
-    public void add(Controller<?> driverController) {
+    public void add(ControllerBinding<?> driverController) {
         controllerOptions.add(new ControllerOption(driverController));
     }
 
-    public void add(Controller<?> driverController, Controller<?> operatorController) {
+    public void add(ControllerBinding<?> driverController, ControllerBinding<?> operatorController) {
         controllerOptions.add(new ControllerOption(driverController, operatorController));
     }
 

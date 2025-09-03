@@ -35,8 +35,7 @@ import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
 import frc.lib.CommandZorroController;
-import frc.lib.Controller;
-import frc.lib.ControllerPatroller;
+import frc.lib.ControllerBinding;
 import frc.lib.ControllerSelector;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.OIConstants;
@@ -77,9 +76,8 @@ public class Robot extends LoggedRobot {
 
   // Controllers
   private CommandZorroController primaryDriver;
-  private CommandXboxController backupDriver;
-  private CommandXboxController primaryOperator;
-  private Notifier controllerChecker;
+  private CommandXboxController secondaryDriver;
+  private CommandXboxController operator;
 
   public Robot() {
     // Record metadata
@@ -156,14 +154,7 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
-    controllerChecker = new Notifier(this::checkControllers);
-    RobotModeTriggers.disabled()
-        .whileTrue(
-            new StartEndCommand(
-                () -> controllerChecker.startPeriodic(0.1), () -> controllerChecker.stop()));
-
-    configureControllerOptions();
-    configureButtonBindings();
+    configureControllers();
     configureAutoOptions();
   }
 
@@ -194,6 +185,7 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
     autoSelector.disabledPeriodic();
+    controllerSelector.disabledPeriodic();
   }
 
   /** This function is called once when autonomous mode is enabled. */
@@ -236,41 +228,13 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {}
 
-  private void configureControllerOptions() {
-    controllerSelector.add(new Controller<>(primaryDriver, OIConstants.kDefaultDriverControllerPort), new Controller<>(primaryOperator, OIConstants.kDefaultOperatorControllerPort));
-    controllerSelector.add(new Controller<>(primaryDriver, OIConstants.kDefaultDriverControllerPort));
-    controllerSelector.add(new Controller<>(backupDriver, OIConstants.kDefaultDriverControllerPort));
+  private void configureControllers() {
+    controllerSelector.add(new ControllerBinding<>(primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver), new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
+    controllerSelector.add(new ControllerBinding<>(primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
+    controllerSelector.add(new ControllerBinding<>(secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
   }
-
-  private void checkControllers() {
-    if (ControllerPatroller.getInstance().controllersChanged()) {
-      // Reset the joysticks & button mappings.
-      configureButtonBindings();
-    }
-  }
-
-  /**
-   * Use this method to define your button->command mappings. Buttons can be created by
-   * instantiating a {@link GenericHID} or one of its subclasses ({@link
-   * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then passing it to a {@link
-   * edu.wpi.first.wpilibj2.command.button.JoystickButton}.
-   */
-  private void configureButtonBindings() {
-    // Clear any active buttons.
-    CommandScheduler.getInstance().getActiveButtonLoop().clear();
-
-    var cp = ControllerPatroller.getInstance();
-
-    // We use two different types of controllers - Zorro & Xbox.
-    // Create Command*Controller objects of the specific types.
-    primaryDriver = new CommandZorroController(cp.findDriverPort());
-    primaryOperator = new CommandXboxController(cp.findOperatorPort());
-
-    configureDriverButtonBindings();
-    configureOperatorButtonBindings();
-  }
-
-  private void configureDriverButtonBindings() {
+  
+  private void bindPrimaryDriver() {
     // Drive in field-relative mode while switch E is up
     primaryDriver.EUp()
         .whileTrue(
@@ -312,7 +276,50 @@ public class Robot extends LoggedRobot {
     primaryDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  private void configureOperatorButtonBindings() {}
+  private void bindSecondaryDriver() {
+        // Drive in field-relative mode while left bumper is released
+        secondaryDriver.leftBumper()
+        .whileFalse(
+            DriveCommands.fieldRelativeJoystickDrive(
+                drive,
+                () -> -secondaryDriver.getLeftY(),
+                () -> -secondaryDriver.getLeftX(),
+                () -> -secondaryDriver.getRightX()));
+        
+        // Drive in robot-relative mode while left bumper is pressed
+                secondaryDriver.leftBumper().whileTrue(
+                    DriveCommands.robotRelativeJoystickDrive(
+                        drive,
+                        () -> -secondaryDriver.getLeftY(),
+                        () -> -secondaryDriver.getLeftX(),
+                        () -> -secondaryDriver.getRightX()));
+
+        // Reset gyro to 0° when B button is pressed
+        secondaryDriver
+        .b()
+        .onTrue(
+            Commands.runOnce(
+                    () ->
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                    drive)
+                .ignoringDisable(true));
+
+        // Lock to 0° when A button is held
+        secondaryDriver
+        .a()
+        .whileTrue(
+            DriveCommands.joystickDriveAtFixedOrientation(
+                drive,
+                () -> -secondaryDriver.getLeftY(),
+                () -> -secondaryDriver.getLeftX(),
+                () -> Rotation2d.kZero));
+
+    // Switch to X pattern when X button is pressed
+    secondaryDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+  }
+
+  private void bindOperator() {}
 
   public void configureAutoOptions() {
     autoSelector.addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(drive)));

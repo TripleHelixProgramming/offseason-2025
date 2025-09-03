@@ -1,12 +1,14 @@
 package frc.lib;
 
-public class Controller<T> {
+public class ControllerBinding<T> {
     private int defaultPort;
     private T controller;
+    private Runnable bindAction;
 
-    public Controller(T controller, int port) {
+    public ControllerBinding(T controller, int port, Runnable bindAction) {
         this.controller = controller;
         this.defaultPort = port;
+        this.bindAction = bindAction;
     }
 
     public T getController() {
@@ -15,5 +17,9 @@ public class Controller<T> {
 
     public int getPort() {
         return defaultPort;
+    }
+
+    public void bind() {
+        bindAction.run();
     }
 }

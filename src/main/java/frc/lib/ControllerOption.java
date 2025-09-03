@@ -26,7 +26,7 @@ public class ControllerOption {
     //     }
     // }
 
-    public ControllerOption(Controller<?> driverController) {
+    public ControllerOption(ControllerBinding<?> driverController) {
         this.driverController = Optional.of(driverController.getController());
         this.defaultDriverPort = OptionalInt.of(driverController.getPort());
 
@@ -34,7 +34,7 @@ public class ControllerOption {
         this.defaultOperatorPort = OptionalInt.empty();
     }
 
-    public ControllerOption(Controller<?> driverController, Controller<?> operatorController) {
+    public ControllerOption(ControllerBinding<?> driverController, ControllerBinding<?> operatorController) {
         this.driverController = Optional.of(driverController.getController());
         this.defaultDriverPort = OptionalInt.of(driverController.getPort());
 
@@ -42,11 +42,11 @@ public class ControllerOption {
         this.defaultOperatorPort = OptionalInt.of(operatorController.getPort());
     }
 
-    public Optional<Controller<?>> getDriverController() {
+    public Optional<?> getDriverController() {
         return this.driverController;
     }
 
-    public Optional<Controller<?>> getOperatorController() {
+    public Optional<?> getOperatorController() {
         return this.operatorController;
     }
 
