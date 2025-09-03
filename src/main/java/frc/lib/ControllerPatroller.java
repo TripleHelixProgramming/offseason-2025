@@ -20,13 +20,6 @@ public class ControllerPatroller {
 
     public static final String[] kDriverControllerNames = new String[] {kZorro};
     public static final String[] kOperatorControllerNames = new String[] {kXbox};
-
-    public static final class DpadDirection {
-      public static int kUp = 0;
-      public static int kRight = 90;
-      public static int kDown = 180;
-      public static int kLeft = 270;
-    }
   }
 
   private static ControllerPatroller patroller = new ControllerPatroller();
