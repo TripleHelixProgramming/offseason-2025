@@ -22,15 +22,10 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.Notifier;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
@@ -185,7 +180,6 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
     autoSelector.disabledPeriodic();
-    controllerSelector.disabledPeriodic();
   }
 
   /** This function is called once when autonomous mode is enabled. */
@@ -229,14 +223,26 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {}
 
   private void configureControllers() {
-    controllerSelector.add(new ControllerBinding<>(primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver), new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
-    controllerSelector.add(new ControllerBinding<>(primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
-    controllerSelector.add(new ControllerBinding<>(secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
+    controllerSelector.add(
+        new ControllerBinding<>(
+            primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
+        new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
+    controllerSelector.add(
+        new ControllerBinding<>(
+            primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
+    controllerSelector.add(
+        new ControllerBinding<>(
+            secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
+    controllerSelector.add(
+        new ControllerBinding<>(
+            secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver),
+        new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
   }
-  
+
   private void bindPrimaryDriver() {
     // Drive in field-relative mode while switch E is up
-    primaryDriver.EUp()
+    primaryDriver
+        .EUp()
         .whileTrue(
             DriveCommands.fieldRelativeJoystickDrive(
                 drive,
@@ -245,7 +251,8 @@ public class Robot extends LoggedRobot {
                 () -> -primaryDriver.getLeftXAxis()));
 
     // Drive in robot-relative mode while switch E is down
-    primaryDriver.EDown()
+    primaryDriver
+        .EDown()
         .whileTrue(
             DriveCommands.robotRelativeJoystickDrive(
                 drive,
@@ -254,7 +261,8 @@ public class Robot extends LoggedRobot {
                 () -> -primaryDriver.getLeftXAxis()));
 
     // Reset gyro to 0° when button G is pressed
-    primaryDriver.GIn()
+    primaryDriver
+        .GIn()
         .onTrue(
             Commands.runOnce(
                     () ->
@@ -264,7 +272,8 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Lock to 0° while button A is held
-    primaryDriver.AIn()
+    primaryDriver
+        .AIn()
         .whileTrue(
             DriveCommands.joystickDriveAtFixedOrientation(
                 drive,
@@ -277,25 +286,28 @@ public class Robot extends LoggedRobot {
   }
 
   private void bindSecondaryDriver() {
-        // Drive in field-relative mode while left bumper is released
-        secondaryDriver.leftBumper()
+    // Drive in field-relative mode while left bumper is released
+    secondaryDriver
+        .leftBumper()
         .whileFalse(
             DriveCommands.fieldRelativeJoystickDrive(
                 drive,
                 () -> -secondaryDriver.getLeftY(),
                 () -> -secondaryDriver.getLeftX(),
                 () -> -secondaryDriver.getRightX()));
-        
-        // Drive in robot-relative mode while left bumper is pressed
-                secondaryDriver.leftBumper().whileTrue(
-                    DriveCommands.robotRelativeJoystickDrive(
-                        drive,
-                        () -> -secondaryDriver.getLeftY(),
-                        () -> -secondaryDriver.getLeftX(),
-                        () -> -secondaryDriver.getRightX()));
 
-        // Reset gyro to 0° when B button is pressed
-        secondaryDriver
+    // Drive in robot-relative mode while left bumper is pressed
+    secondaryDriver
+        .leftBumper()
+        .whileTrue(
+            DriveCommands.robotRelativeJoystickDrive(
+                drive,
+                () -> -secondaryDriver.getLeftY(),
+                () -> -secondaryDriver.getLeftX(),
+                () -> -secondaryDriver.getRightX()));
+
+    // Reset gyro to 0° when B button is pressed
+    secondaryDriver
         .b()
         .onTrue(
             Commands.runOnce(
@@ -305,8 +317,8 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-        // Lock to 0° when A button is held
-        secondaryDriver
+    // Lock to 0° when A button is held
+    secondaryDriver
         .a()
         .whileTrue(
             DriveCommands.joystickDriveAtFixedOrientation(
