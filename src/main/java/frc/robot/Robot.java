@@ -68,7 +68,7 @@ public class Robot extends LoggedRobot {
   private final AutoSelector autoSelector =
       new AutoSelector(
           AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
-  private final ControllerSelector controllerSelector = new ControllerSelector();
+  private final ControllerSelector controllerSelector;
   private Notifier controllerChecker;
 
   // Subsystems
@@ -149,6 +149,7 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
+    controllerSelector = new ControllerSelector(Constants.currentMode);
     configureControlPanelBindings();
     controllerChecker = new Notifier(() -> controllerSelector.rebindControlPanel());
     RobotModeTriggers.disabled()

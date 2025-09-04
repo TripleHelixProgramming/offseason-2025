@@ -1,17 +1,21 @@
 package frc.lib;
 
 import edu.wpi.first.wpilibj.GenericHID;
+import frc.robot.Constants.Mode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
 
 public class ControllerSelector {
 
+  private Mode mode;
   private List<ControlPanelBinding> controlPanelBindings = new ArrayList<>();
   private List<GenericHID> controllers = new ArrayList<>();
   private List<String> controllerNames = new ArrayList<>();
 
-  public ControllerSelector() {
+  public ControllerSelector(Mode mode) {
+    this.mode = mode;
+
     // Create a joystick at each port so we can check their names later
     // Most of these objects will go unused
     for (int i = 0; i < 6; i++) {
