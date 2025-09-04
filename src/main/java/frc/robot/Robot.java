@@ -45,7 +45,6 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import java.util.List;
-import java.util.function.IntSupplier;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -222,27 +221,20 @@ public class Robot extends LoggedRobot {
   private void configureControllers() {
     controllerSelector.add(
         new ControllerBinding(
-            ControllerType.ZORRO,
-            OIConstants.kDefaultDriverPort,
-            () -> bindPrimaryDriver(controllerSelector.driverPortSupplier())),
+            ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
         new ControllerBinding(
-            ControllerType.XBOX,
-            OIConstants.kDefaultOperatorPort,
-            () -> bindOperator(controllerSelector.operatorPortSupplier())));
+            ControllerType.XBOX, OIConstants.kDefaultOperatorPort, this::bindOperator));
     controllerSelector.add(
         new ControllerBinding(
-            ControllerType.ZORRO,
-            OIConstants.kDefaultDriverPort,
-            () -> bindPrimaryDriver(controllerSelector.driverPortSupplier())));
+            ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
     controllerSelector.add(
         new ControllerBinding(
-            ControllerType.XBOX,
-            OIConstants.kDefaultDriverPort,
-            () -> bindSecondaryDriver(controllerSelector.driverPortSupplier())));
+            ControllerType.XBOX, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
   }
 
-  public void bindPrimaryDriver(IntSupplier port) {
-    var primaryDriver = new CommandZorroController(port.getAsInt());
+  public void bindPrimaryDriver() {
+    var primaryDriver =
+        new CommandZorroController(controllerSelector.driverPortSupplier().getAsInt());
 
     // Drive in field-relative mode while switch E is up
     primaryDriver
@@ -289,8 +281,9 @@ public class Robot extends LoggedRobot {
     primaryDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  public void bindSecondaryDriver(IntSupplier port) {
-    var secondaryDriver = new CommandXboxController(port.getAsInt());
+  public void bindSecondaryDriver() {
+    var secondaryDriver =
+        new CommandXboxController(controllerSelector.driverPortSupplier().getAsInt());
 
     // Drive in field-relative mode while left bumper is released
     secondaryDriver
@@ -337,8 +330,8 @@ public class Robot extends LoggedRobot {
     secondaryDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  public void bindOperator(IntSupplier port) {
-    var operator = new CommandXboxController(port.getAsInt());
+  public void bindOperator() {
+    var operator = new CommandXboxController(controllerSelector.operatorPortSupplier().getAsInt());
   }
 
   public void configureAutoOptions() {
