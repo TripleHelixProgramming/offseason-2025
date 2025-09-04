@@ -1,18 +1,18 @@
 package frc.lib;
 
-public class ControllerBinding<T> {
+public class ControllerBinding {
   private int defaultPort;
-  private T controller;
+  private ControllerType controllerType;
   private Runnable bindAction;
 
-  public ControllerBinding(T controller, int port, Runnable bindAction) {
-    this.controller = controller;
+  public ControllerBinding(ControllerType controllerType, int port, Runnable bindAction) {
+    this.controllerType = controllerType;
     this.defaultPort = port;
     this.bindAction = bindAction;
   }
 
-  public T getController() {
-    return controller;
+  public ControllerType getControllerType() {
+    return controllerType;
   }
 
   public int getPort() {
@@ -21,5 +21,12 @@ public class ControllerBinding<T> {
 
   public void bind() {
     bindAction.run();
+  }
+
+  public enum ControllerType {
+    ZORRO,
+    XBOX,
+    RADIOMASTER,
+    PS4;
   }
 }

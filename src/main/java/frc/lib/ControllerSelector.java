@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 public class ControllerSelector {
 
@@ -46,11 +47,11 @@ public class ControllerSelector {
     return changed;
   }
 
-  public void add(ControllerBinding<?> driverController) {
+  public void add(ControllerBinding driverController) {
     controlPanelBindings.add(new ControlPanelBinding(driverController));
   }
 
-  public void add(ControllerBinding<?> driverController, ControllerBinding<?> operatorController) {
+  public void add(ControllerBinding driverController, ControllerBinding operatorController) {
     controlPanelBindings.add(new ControlPanelBinding(driverController, operatorController));
   }
 
@@ -64,17 +65,25 @@ public class ControllerSelector {
     // Filter the stream of control panel bindings for the first match where:
     //  * The given number of controllers are connected
     //  * Connected controllers are of the given type
-    // 
+    //
     // In the case where the driver and operator controller are the same type,
     // and exactly 2 of these devices are plugged into the given ports, then
     // assume they are plugged in correctly and assign their functionality according
     // to the given port #s.
-    // 
+    //
     // In the case where the driver and operator controller are the same type,
     // but there are NOT exactly 2 of these devices connected, or they are NOT plugged
     // into the given ports, then do not bind any commands.
     //
     // Then, for each of the controllers (assuming they exist), instantiate
     // an HID device of the correct type at the port, and bind its commands.
+  }
+
+  public IntSupplier driverPortSupplier() {
+    return () -> 0;
+  }
+
+  public IntSupplier operatorPortSupplier() {
+    return () -> 1;
   }
 }

@@ -31,6 +31,7 @@ import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
 import frc.lib.CommandZorroController;
 import frc.lib.ControllerBinding;
+import frc.lib.ControllerBinding.ControllerType;
 import frc.lib.ControllerSelector;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.OIConstants;
@@ -44,6 +45,7 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import java.util.List;
+import java.util.function.IntSupplier;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -68,11 +70,6 @@ public class Robot extends LoggedRobot {
 
   // Subsystems
   private Drive drive;
-
-  // Controllers
-  private CommandZorroController primaryDriver;
-  private CommandXboxController secondaryDriver;
-  private CommandXboxController operator;
 
   public Robot() {
     // Record metadata
@@ -224,18 +221,29 @@ public class Robot extends LoggedRobot {
 
   private void configureControllers() {
     controllerSelector.add(
-        new ControllerBinding<>(
-            primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
-        new ControllerBinding<>(operator, OIConstants.kDefaultOperatorPort, this::bindOperator));
+        new ControllerBinding(
+            ControllerType.ZORRO,
+            OIConstants.kDefaultDriverPort,
+            () -> bindPrimaryDriver(controllerSelector.driverPortSupplier())),
+        new ControllerBinding(
+            ControllerType.XBOX,
+            OIConstants.kDefaultOperatorPort,
+            () -> bindOperator(controllerSelector.operatorPortSupplier())));
     controllerSelector.add(
-        new ControllerBinding<>(
-            primaryDriver, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
+        new ControllerBinding(
+            ControllerType.ZORRO,
+            OIConstants.kDefaultDriverPort,
+            () -> bindPrimaryDriver(controllerSelector.driverPortSupplier())));
     controllerSelector.add(
-        new ControllerBinding<>(
-            secondaryDriver, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
+        new ControllerBinding(
+            ControllerType.XBOX,
+            OIConstants.kDefaultDriverPort,
+            () -> bindSecondaryDriver(controllerSelector.driverPortSupplier())));
   }
 
-  private void bindPrimaryDriver() {
+  public void bindPrimaryDriver(IntSupplier port) {
+    var primaryDriver = new CommandZorroController(port.getAsInt());
+
     // Drive in field-relative mode while switch E is up
     primaryDriver
         .EUp()
@@ -281,7 +289,9 @@ public class Robot extends LoggedRobot {
     primaryDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  private void bindSecondaryDriver() {
+  public void bindSecondaryDriver(IntSupplier port) {
+    var secondaryDriver = new CommandXboxController(port.getAsInt());
+
     // Drive in field-relative mode while left bumper is released
     secondaryDriver
         .leftBumper()
@@ -327,7 +337,9 @@ public class Robot extends LoggedRobot {
     secondaryDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  private void bindOperator() {}
+  public void bindOperator(IntSupplier port) {
+    var operator = new CommandXboxController(port.getAsInt());
+  }
 
   public void configureAutoOptions() {
     autoSelector.addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(drive)));
