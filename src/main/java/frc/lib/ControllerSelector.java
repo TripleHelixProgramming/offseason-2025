@@ -1,8 +1,6 @@
 package frc.lib;
 
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj.event.BooleanEvent;
-import edu.wpi.first.wpilibj.event.EventLoop;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntSupplier;
@@ -12,8 +10,6 @@ public class ControllerSelector {
   private List<ControlPanelBinding> controlPanelBindings = new ArrayList<>();
   private List<GenericHID> controllers = new ArrayList<>();
   private List<String> controllerNames = new ArrayList<>();
-  private EventLoop eventLoop = new EventLoop();
-  private BooleanEvent controllersChanged;
 
   public ControllerSelector() {
     // Create a joystick at each port so we can check their names later
@@ -22,19 +18,15 @@ public class ControllerSelector {
       controllers.add(new GenericHID(i));
       controllerNames.add(controllers.get(i).getName());
     }
-
-    controllersChanged = new BooleanEvent(eventLoop, () -> controllersChanged());
-    controllersChanged.rising().ifHigh(() -> rebindControlPanel());
   }
 
   /**
-   * Detect if the list of controllers connected to USB has changed.
-   *
-   * <p>If so, update the list of controllers and return TRUE.
+   * Detect if the list of controllers connected to USB has changed. If so, update the list of
+   * controllers and return TRUE.
    *
    * @return has the list of controllers changed?
    */
-  public boolean controllersChanged() {
+  private boolean controllersChanged() {
 
     boolean changed = false;
     for (int i = 0; i < 6; i++) {
@@ -55,7 +47,9 @@ public class ControllerSelector {
     controlPanelBindings.add(new ControlPanelBinding(driverController, operatorController));
   }
 
-  private void rebindControlPanel() {
+  public void rebindControlPanel() {
+    if (!controllersChanged()) return;
+
     // Filter the stream of control panel bindings for the first exact match where:
     //  * The given number of controllers are connected
     //  * Connected controllers are of the given type
@@ -75,8 +69,7 @@ public class ControllerSelector {
     // but there are NOT exactly 2 of these devices connected, or they are NOT plugged
     // into the given ports, then do not bind any commands.
     //
-    // Then, for each of the controllers (assuming they exist), instantiate
-    // an HID device of the correct type at the port, and bind its commands.
+    // Then, for each controller that exists, bind its commands.
   }
 
   public IntSupplier driverPortSupplier() {

@@ -22,10 +22,13 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
@@ -66,6 +69,7 @@ public class Robot extends LoggedRobot {
       new AutoSelector(
           AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
   private final ControllerSelector controllerSelector = new ControllerSelector();
+  private Notifier controllerChecker;
 
   // Subsystems
   private Drive drive;
@@ -145,7 +149,13 @@ public class Robot extends LoggedRobot {
     // Start AdvantageKit logger
     Logger.start();
 
-    configureControllers();
+    configureControlPanelBindings();
+    controllerChecker = new Notifier(() -> controllerSelector.rebindControlPanel());
+    RobotModeTriggers.disabled()
+        .whileTrue(
+            new StartEndCommand(
+                () -> controllerChecker.startPeriodic(0.5), () -> controllerChecker.stop()));
+
     configureAutoOptions();
   }
 
@@ -218,7 +228,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void simulationPeriodic() {}
 
-  private void configureControllers() {
+  private void configureControlPanelBindings() {
     controllerSelector.add(
         new ControllerBinding(
             ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
