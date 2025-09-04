@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import frc.robot.Constants.Mode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.IntSupplier;
 
 public class ControllerSelector {
 
@@ -82,11 +81,11 @@ public class ControllerSelector {
     // Then, for each valid controller, bind its commands.
   }
 
-  public IntSupplier driverPortSupplier() {
-    return () -> 0;
+  public int getDriverPort() {
+    return 0;
   }
 
-  public IntSupplier operatorPortSupplier() {
-    return () -> 1;
+  public int getOperatorPort() {
+    return 1;
   }
 }

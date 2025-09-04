@@ -254,7 +254,7 @@ public class Robot extends LoggedRobot {
 
   public void bindPrimaryDriver() {
     var primaryDriver =
-        new CommandZorroController(controllerSelector.driverPortSupplier().getAsInt());
+        new CommandZorroController(controllerSelector.getDriverPort());
 
     // Drive in field-relative mode while switch E is up
     primaryDriver
@@ -303,7 +303,7 @@ public class Robot extends LoggedRobot {
 
   public void bindSecondaryDriver() {
     var secondaryDriver =
-        new CommandXboxController(controllerSelector.driverPortSupplier().getAsInt());
+        new CommandXboxController(controllerSelector.getDriverPort());
 
     // Drive in field-relative mode while left bumper is released
     secondaryDriver
@@ -351,7 +351,7 @@ public class Robot extends LoggedRobot {
   }
 
   public void bindOperator() {
-    var operator = new CommandXboxController(controllerSelector.operatorPortSupplier().getAsInt());
+    var operator = new CommandXboxController(controllerSelector.getOperatorPort());
   }
 
   public void configureAutoOptions() {
