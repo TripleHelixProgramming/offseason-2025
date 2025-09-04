@@ -37,6 +37,7 @@ import frc.lib.ControllerBinding;
 import frc.lib.ControllerBinding.ControllerType;
 import frc.lib.ControllerSelector;
 import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.Mode;
 import frc.robot.Constants.OIConstants;
 import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
@@ -230,15 +231,23 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {}
 
   private void configureControlPanelBindings() {
+    // Prefer operating with 2 differentiated controllers
     controllerSelector.add(
+        new Mode[] {Mode.REAL, Mode.SIM},
         new ControllerBinding(
             ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
         new ControllerBinding(
             ControllerType.XBOX, OIConstants.kDefaultOperatorPort, this::bindOperator));
+    
+    // Allow driving with Zorro controller only
     controllerSelector.add(
+        new Mode[] {Mode.REAL, Mode.SIM},
         new ControllerBinding(
             ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
+
+    // Allow driving with XBox controller only, but only in simulation
     controllerSelector.add(
+        new Mode[] {Mode.SIM},
         new ControllerBinding(
             ControllerType.XBOX, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
   }

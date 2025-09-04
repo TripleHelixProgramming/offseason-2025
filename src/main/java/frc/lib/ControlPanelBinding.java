@@ -1,18 +1,24 @@
 package frc.lib;
 
+import frc.robot.Constants.Mode;
 import java.util.Optional;
 
 public class ControlPanelBinding {
   private Optional<ControllerBinding> driver;
   private Optional<ControllerBinding> operator;
+  private Mode[] allowedModes;
 
-  public ControlPanelBinding(ControllerBinding driverController) {
+  public ControlPanelBinding(Mode[] allowedModes, ControllerBinding driverController) {
+    this.allowedModes = allowedModes;
     this.driver = Optional.of(driverController);
     this.operator = Optional.empty();
   }
 
   public ControlPanelBinding(
-      ControllerBinding driverController, ControllerBinding operatorController) {
+      Mode[] allowedModes,
+      ControllerBinding driverController,
+      ControllerBinding operatorController) {
+    this.allowedModes = allowedModes;
     this.driver = Optional.of(driverController);
     this.operator = Optional.of(operatorController);
   }
@@ -23,5 +29,9 @@ public class ControlPanelBinding {
 
   public Optional<ControllerBinding> getOperator() {
     return this.operator;
+  }
+
+  public Mode[] getAllowedModes() {
+    return this.allowedModes;
   }
 }

@@ -43,12 +43,16 @@ public class ControllerSelector {
     return changed;
   }
 
-  public void add(ControllerBinding driverController) {
-    controlPanelBindings.add(new ControlPanelBinding(driverController));
+  public void add(Mode[] allowedModes, ControllerBinding driverController) {
+    controlPanelBindings.add(new ControlPanelBinding(allowedModes, driverController));
   }
 
-  public void add(ControllerBinding driverController, ControllerBinding operatorController) {
-    controlPanelBindings.add(new ControlPanelBinding(driverController, operatorController));
+  public void add(
+      Mode[] allowedModes,
+      ControllerBinding driverController,
+      ControllerBinding operatorController) {
+    controlPanelBindings.add(
+        new ControlPanelBinding(allowedModes, driverController, operatorController));
   }
 
   public void rebindControlPanel() {
@@ -57,12 +61,14 @@ public class ControllerSelector {
     // Filter the stream of control panel bindings for the first exact match where:
     //  * The given number of controllers are connected
     //  * Connected controllers are of the given type
-    //  * Connected controllers are at the given port
+    //  * Connected controllers of the correct type are at the given port
+    //  * We are in the allowed mode (real/sim) for the configuration
     //
     // If no exact matches are found, then assume they are in the wrong ports.
     // Filter the stream of control panel bindings for the first match where:
     //  * The given number of controllers are connected
     //  * Connected controllers are of the given type
+    //  * We are in the allowed mode (real/sim) for the configuration
     //
     // In the case where the driver and operator controller are the same type,
     // and exactly 2 of these devices are plugged into the given ports, then
@@ -73,7 +79,7 @@ public class ControllerSelector {
     // but there are NOT exactly 2 of these devices connected, or they are NOT plugged
     // into the given ports, then do not bind any commands.
     //
-    // Then, for each controller that exists, bind its commands.
+    // Then, for each valid controller, bind its commands.
   }
 
   public IntSupplier driverPortSupplier() {
