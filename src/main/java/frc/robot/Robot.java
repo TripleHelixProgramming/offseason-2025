@@ -1,16 +1,3 @@
-// Copyright 2021-2025 FRC 6328
-// http://github.com/Mechanical-Advantage
-//
-// This program is free software; you can redistribute it and/or
-// modify it under the terms of the GNU General Public License
-// version 3 as published by the Free Software Foundation or
-// available in the root directory of this project.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-// GNU General Public License for more details.
-
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
@@ -33,12 +20,11 @@ import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
 import frc.lib.CommandZorroController;
-import frc.lib.ControllerBinding;
 import frc.lib.ControllerBinding.ControllerType;
 import frc.lib.ControllerSelector;
+import frc.lib.ControllerSelector.ControllerConfig;
+import frc.lib.ControllerSelector.ControllerFunction;
 import frc.robot.Constants.AutoConstants;
-import frc.robot.Constants.Mode;
-import frc.robot.Constants.OIConstants;
 import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
@@ -231,53 +217,56 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {}
 
   private void configureControlPanelBindings() {
-    // Prefer operating with 2 differentiated controllers
-    controllerSelector.add(
-        new Mode[] {Mode.REAL, Mode.SIM},
-        new ControllerBinding(
-            ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver),
-        new ControllerBinding(
-            ControllerType.XBOX, OIConstants.kDefaultOperatorPort, this::bindOperator));
-    
-    // Allow driving with Zorro controller only
-    controllerSelector.add(
-        new Mode[] {Mode.REAL, Mode.SIM},
-        new ControllerBinding(
-            ControllerType.ZORRO, OIConstants.kDefaultDriverPort, this::bindPrimaryDriver));
+      // ZORRO is always preferred as driver in REAL and SIM mode
+      controllerSelector.addConfig(
+        new ControllerConfig(
+            ControllerFunction.DRIVER,
+            ControllerType.ZORRO,
+            this::bindZorroDriver,
+            Constants.Mode.REAL, Constants.Mode.SIM));
 
-    // Allow driving with XBox controller only, but only in simulation
-    controllerSelector.add(
-        new Mode[] {Mode.SIM},
-        new ControllerBinding(
-            ControllerType.XBOX, OIConstants.kDefaultDriverPort, this::bindSecondaryDriver));
+    // XBOX is always preferred as operator in REAL and SIM mode
+    controllerSelector.addConfig(
+        new ControllerConfig(
+            ControllerFunction.OPERATOR,
+            ControllerType.XBOX,
+            this::bindXboxOperator,
+            Constants.Mode.REAL, Constants.Mode.SIM));
+
+    // XBOX is permitted as driver in SIM mode only
+    controllerSelector.addConfig(
+        new ControllerConfig(
+            ControllerFunction.DRIVER,
+            ControllerType.XBOX,
+            this::bindXboxDriver,
+            Constants.Mode.SIM));
   }
 
-  public void bindPrimaryDriver() {
-    var primaryDriver =
-        new CommandZorroController(controllerSelector.getDriverPort());
+  public void bindZorroDriver(int port) {
+    var zorroDriver = new CommandZorroController(port);
 
     // Drive in field-relative mode while switch E is up
-    primaryDriver
+    zorroDriver
         .EUp()
         .whileTrue(
             DriveCommands.fieldRelativeJoystickDrive(
                 drive,
-                () -> -primaryDriver.getRightYAxis(),
-                () -> -primaryDriver.getRightXAxis(),
-                () -> -primaryDriver.getLeftXAxis()));
+                () -> -zorroDriver.getRightYAxis(),
+                () -> -zorroDriver.getRightXAxis(),
+                () -> -zorroDriver.getLeftXAxis()));
 
     // Drive in robot-relative mode while switch E is down
-    primaryDriver
+    zorroDriver
         .EDown()
         .whileTrue(
             DriveCommands.robotRelativeJoystickDrive(
                 drive,
-                () -> -primaryDriver.getRightYAxis(),
-                () -> -primaryDriver.getRightXAxis(),
-                () -> -primaryDriver.getLeftXAxis()));
+                () -> -zorroDriver.getRightYAxis(),
+                () -> -zorroDriver.getRightXAxis(),
+                () -> -zorroDriver.getLeftXAxis()));
 
     // Reset gyro to 0° when button G is pressed
-    primaryDriver
+    zorroDriver
         .GIn()
         .onTrue(
             Commands.runOnce(
@@ -288,45 +277,44 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Lock to 0° while button A is held
-    primaryDriver
+    zorroDriver
         .AIn()
         .whileTrue(
             DriveCommands.joystickDriveAtFixedOrientation(
                 drive,
-                () -> -primaryDriver.getRightYAxis(),
-                () -> -primaryDriver.getRightXAxis(),
+                () -> -zorroDriver.getRightYAxis(),
+                () -> -zorroDriver.getRightXAxis(),
                 () -> Rotation2d.kZero));
 
     // Switch to X pattern when button D is pressed
-    primaryDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    zorroDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  public void bindSecondaryDriver() {
-    var secondaryDriver =
-        new CommandXboxController(controllerSelector.getDriverPort());
+  public void bindXboxDriver(int port) {
+    var xboxDriver = new CommandXboxController(port);
 
     // Drive in field-relative mode while left bumper is released
-    secondaryDriver
+    xboxDriver
         .leftBumper()
         .whileFalse(
             DriveCommands.fieldRelativeJoystickDrive(
                 drive,
-                () -> -secondaryDriver.getLeftY(),
-                () -> -secondaryDriver.getLeftX(),
-                () -> -secondaryDriver.getRightX()));
+                () -> -xboxDriver.getLeftY(),
+                () -> -xboxDriver.getLeftX(),
+                () -> -xboxDriver.getRightX()));
 
     // Drive in robot-relative mode while left bumper is pressed
-    secondaryDriver
+    xboxDriver
         .leftBumper()
         .whileTrue(
             DriveCommands.robotRelativeJoystickDrive(
                 drive,
-                () -> -secondaryDriver.getLeftY(),
-                () -> -secondaryDriver.getLeftX(),
-                () -> -secondaryDriver.getRightX()));
+                () -> -xboxDriver.getLeftY(),
+                () -> -xboxDriver.getLeftX(),
+                () -> -xboxDriver.getRightX()));
 
     // Reset gyro to 0° when B button is pressed
-    secondaryDriver
+    xboxDriver
         .b()
         .onTrue(
             Commands.runOnce(
@@ -337,21 +325,21 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Lock to 0° when A button is held
-    secondaryDriver
+    xboxDriver
         .a()
         .whileTrue(
             DriveCommands.joystickDriveAtFixedOrientation(
                 drive,
-                () -> -secondaryDriver.getLeftY(),
-                () -> -secondaryDriver.getLeftX(),
+                () -> -xboxDriver.getLeftY(),
+                () -> -xboxDriver.getLeftX(),
                 () -> Rotation2d.kZero));
 
     // Switch to X pattern when X button is pressed
-    secondaryDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
-  public void bindOperator() {
-    var operator = new CommandXboxController(controllerSelector.getOperatorPort());
+  public void bindXboxOperator(int port) {
+    var xboxOperator = new CommandXboxController(port);
   }
 
   public void configureAutoOptions() {
