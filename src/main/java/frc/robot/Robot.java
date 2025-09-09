@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ConditionalCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -259,23 +260,26 @@ public class Robot extends LoggedRobot {
   }
 
   private void configureDriverButtonBindings() {
-    // Drive in field-relative mode while switch E is up
-    driver.EUp()
+    RobotModeTriggers.teleop()
         .whileTrue(
-            DriveCommands.fieldRelativeJoystickDrive(
-                drive,
-                () -> -driver.getRightYAxis(),
-                () -> -driver.getRightXAxis(),
-                () -> -driver.getLeftXAxis()));
+            new ConditionalCommand(
 
-    // Drive in robot-relative mode while switch E is down
-    driver.EDown()
-        .whileTrue(
-            DriveCommands.robotRelativeJoystickDrive(
-                drive,
-                () -> -driver.getRightYAxis(),
-                () -> -driver.getRightXAxis(),
-                () -> -driver.getLeftXAxis()));
+                // Drive in field-relative mode while switch E is up
+                DriveCommands.fieldRelativeJoystickDrive(
+                    drive,
+                    () -> -driver.getRightYAxis(),
+                    () -> -driver.getRightXAxis(),
+                    () -> -driver.getLeftXAxis()),
+
+                // Drive in robot-relative mode while switch E is down
+                DriveCommands.robotRelativeJoystickDrive(
+                    drive,
+                    () -> -driver.getRightYAxis(),
+                    () -> -driver.getRightXAxis(),
+                    () -> -driver.getLeftXAxis()),
+
+                // Get value of switch E
+                driver.EUp()));
 
     // Reset gyro to 0° when button G is pressed
     driver.GIn()
