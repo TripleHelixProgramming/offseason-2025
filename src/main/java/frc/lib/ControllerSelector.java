@@ -3,7 +3,6 @@ package frc.lib;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import frc.lib.ControllerBinding.ControllerType;
 import frc.robot.Constants.Mode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -33,6 +32,26 @@ public class ControllerSelector {
   public enum ControllerFunction {
     DRIVER,
     OPERATOR
+  }
+
+  /**
+   * Defines the choices of controller hardware.
+   */
+  public enum ControllerType {
+    ZORRO("Zorro"),
+    XBOX("XBOX"),
+    RADIOMASTER("TX16S"),
+    PS4("P");
+
+    String deviceName;
+
+    ControllerType(String deviceName) {
+      this.deviceName = deviceName;
+    }
+
+    String getDeviceName() {
+      return deviceName;
+    }
   }
 
   /**
@@ -225,7 +244,7 @@ public class ControllerSelector {
       return false;
     }
 
-    return controllerName.toLowerCase().contains(controllerType.toString().toLowerCase());
+    return controllerName.toLowerCase().contains(controllerType.getDeviceName().toLowerCase());
   }
 
   public int getDriverPort() {

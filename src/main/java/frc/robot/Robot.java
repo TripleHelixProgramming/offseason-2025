@@ -20,7 +20,7 @@ import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
 import frc.lib.CommandZorroController;
-import frc.lib.ControllerBinding.ControllerType;
+import frc.lib.ControllerSelector.ControllerType;
 import frc.lib.ControllerSelector;
 import frc.lib.ControllerSelector.ControllerConfig;
 import frc.lib.ControllerSelector.ControllerFunction;
