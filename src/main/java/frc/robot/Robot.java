@@ -246,24 +246,14 @@ public class Robot extends LoggedRobot {
     var zorroDriver = new CommandZorroController(port);
 
     // Drive in field-relative mode while switch E is up
-    zorroDriver
-        .EUp()
-        .whileTrue(
-            DriveCommands.fieldRelativeJoystickDrive(
-                drive,
-                () -> -zorroDriver.getRightYAxis(),
-                () -> -zorroDriver.getRightXAxis(),
-                () -> -zorroDriver.getLeftXAxis()));
-
     // Drive in robot-relative mode while switch E is down
-    zorroDriver
-        .EDown()
-        .whileTrue(
-            DriveCommands.robotRelativeJoystickDrive(
-                drive,
-                () -> -zorroDriver.getRightYAxis(),
-                () -> -zorroDriver.getRightXAxis(),
-                () -> -zorroDriver.getLeftXAxis()));
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -zorroDriver.getRightYAxis(),
+            () -> -zorroDriver.getRightXAxis(),
+            () -> -zorroDriver.getLeftXAxis(),
+            () -> zorroDriver.getHID().getEUp()));
 
     // Reset gyro to 0° when button G is pressed
     zorroDriver
