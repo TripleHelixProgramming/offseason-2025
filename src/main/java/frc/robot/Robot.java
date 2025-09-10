@@ -55,7 +55,6 @@ public class Robot extends LoggedRobot {
   private final AutoSelector autoSelector =
       new AutoSelector(
           AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
-  private Notifier controllerChecker;
 
   // Subsystems
   private Drive drive;
@@ -134,15 +133,8 @@ public class Robot extends LoggedRobot {
 
     // Start AdvantageKit logger
     Logger.start();
+
     configureControlPanelBindings();
-    controllerChecker = new Notifier(() -> ControllerSelector.getInstance().scanAndRebind());
-
-    // RobotModeTriggers.disabled()
-    //     .whileTrue(
-    //         new StartEndCommand(
-    //             () -> controllerChecker.startPeriodic(0.5), () -> controllerChecker.stop()));
-    RobotModeTriggers.disabled().onFalse(new InstantCommand(() -> controllerChecker.stop()));
-
     configureAutoOptions();
   }
 
@@ -166,15 +158,14 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when the robot is disabled. */
   @Override
-  public void disabledInit() {
-    controllerChecker.startPeriodic(0.5);
-  }
+  public void disabledInit() {}
 
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
     autoSelector.disabledPeriodic();
+    ControllerSelector.getInstance().scan();
   }
 
   /** This function is called once when autonomous mode is enabled. */

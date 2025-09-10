@@ -4,8 +4,8 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import java.util.Arrays;
-import java.util.HashSet;
+
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
 import org.littletonrobotics.junction.Logger;
@@ -15,7 +15,7 @@ import org.littletonrobotics.junction.Logger;
  *
  * <p>This class scans for connected controllers and matches them against a predefined,
  * priority-ordered list of configurations. It automatically handles controller connections and
- * disconnections, rebinding controls as needed. The {@code scanAndRebind()} method must be called
+ * disconnections, rebinding controls as needed. The {@code scan()} method must be called
  * periodically to check for controller changes.
  *
  * <p><b>Priority:</b> The selection of controllers is prioritized in the order that configurations
@@ -28,8 +28,8 @@ import org.littletonrobotics.junction.Logger;
  * <p>1. Call the static {@code configure()} method a single time in {@code robotInit()} to set up
  * the desired controller configurations.
  *
- * <p>2. Periodically call {@code ControllerSelector.getInstance().scanAndRebind()} from a loop in
- * your robot code (e.g., using a Notifier or from {@code robotPeriodic()}) to handle controller
+ * <p>2. Periodically call {@code ControllerSelector.getInstance().scan()} from a loop in
+ * your robot code (e.g., using a Notifier or from {@code disabledPeriodic()}) to handle controller
  * changes.
  */
 public class ControllerSelector {
@@ -115,24 +115,19 @@ public class ControllerSelector {
         ControllerType controllerType,
         IntConsumer bindingCallback,
         Mode... modes) {
-      this.modes = new HashSet<>(Arrays.asList(modes));
+      this.modes = Set.of(modes);
       this.controllerFunction = controllerFunction;
       this.controllerType = controllerType;
       this.bindingCallback = bindingCallback;
     }
   }
 
+  // TODO: Is this number actually defined as a constant somewhere in WPILlib?
   private static final int NUM_CONTROLLER_PORTS = 6;
 
   private final ControllerConfig[] controllerConfigs;
   private final GenericHID[] controllers;
-  private String[] controllerNames;
-
-  // State for the currently bound controllers
-  private int driverPort = -1;
-  private int operatorPort = -1;
-  private ControllerConfig driverConfig = null;
-  private ControllerConfig operatorConfig = null;
+  private final String[] controllerNames;
 
   /**
    * Constructs a new ControllerSelector object. This is private to enforce the singleton pattern.
@@ -150,23 +145,22 @@ public class ControllerSelector {
     }
 
     // Perform the initial scan and binding.
-    scanAndRebind();
+    scan();
   }
 
   /**
    * Compares the currently connected controllers to a cached list to detect changes. If a change is
-   * found, the cache is updated.
+   * found, the cache is updated. This method avoids allocating new objects.
    *
    * @return True if the list of connected controllers has changed, false otherwise.
    */
   private boolean controllersChanged() {
     boolean changed = false;
     for (int i = 0; i < NUM_CONTROLLER_PORTS; i++) {
-      // TODO: Can getName() return null?
-      String currentName = controllers[i].getName();
-      // Check if the current name is different from the cached name.
-      // This handles the initial case where the cached name is null.
-      if (!currentName.equals(controllerNames[i])) {
+      var currentName = controllers[i].getName();
+      // Use Objects.equals for null-safe comparison.
+      // This handles the initial case where the cached name is an empty string.
+      if (!Objects.equals(currentName, controllerNames[i])) {
         controllerNames[i] = currentName; // Update the cache
         changed = true;
       }
@@ -176,7 +170,7 @@ public class ControllerSelector {
 
   /**
    * Scans for controller changes and re-binds controls if necessary. This method should be called
-   * periodically (e.g., in robotPeriodic or a dedicated Notifier).
+   * periodically (e.g., in disabledPeriodic or a dedicated Notifier).
    *
    * <p>The process is as follows:
    *
@@ -184,30 +178,27 @@ public class ControllerSelector {
    *
    * <p>2. Clears all existing command bindings to ensure a clean state.
    *
-   * <p>3. Resets the internal state for driver and operator controllers.
-   *
-   * <p>4. Iterates through the configurations to find the highest-priority match for the DRIVER
+   * <p>3. Iterates through the configurations to find the highest-priority match for the DRIVER
    * controller. If found, its binding callback is executed immediately.
    *
-   * <p>5. Iterates again to find the highest-priority match for the OPERATOR controller, ensuring it
+   * <p>4. Iterates again to find the highest-priority match for the OPERATOR controller, ensuring it
    * doesn't use the same port as the driver. If found, its binding callback is executed
    * immediately.
    *
-   * <p>6. Logs the final controller assignments.
+   * <p>5. Logs the final controller assignments.
    */
-  public void scanAndRebind() {
+  public void scan() {
     if (!controllersChanged()) {
-      return; // No changes, no need to rebind
+      return; 
     }
 
     // Clear all button bindings to prepare for rebinding
     CommandScheduler.getInstance().getDefaultButtonLoop().clear();
 
-    // Reset internal state
-    driverPort = -1;
-    operatorPort = -1;
-    driverConfig = null;
-    operatorConfig = null;
+    int driverPort = -1;
+    int operatorPort = -1;
+    ControllerConfig driverConfig = null;
+    ControllerConfig operatorConfig = null;
 
     // --- Find and bind DRIVER controller ---
     // The outer loop iterates through configurations, respecting the order they were added
