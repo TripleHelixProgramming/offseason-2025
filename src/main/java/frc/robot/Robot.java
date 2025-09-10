@@ -13,17 +13,17 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
 import frc.lib.AutoSelector;
 import frc.lib.CommandZorroController;
-import frc.lib.ControllerSelector.ControllerType;
 import frc.lib.ControllerSelector;
 import frc.lib.ControllerSelector.ControllerConfig;
 import frc.lib.ControllerSelector.ControllerFunction;
+import frc.lib.ControllerSelector.ControllerType;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
@@ -139,10 +139,11 @@ public class Robot extends LoggedRobot {
     controllerSelector = new ControllerSelector(Constants.currentMode);
     configureControlPanelBindings();
     controllerChecker = new Notifier(() -> controllerSelector.rebindControlPanel());
-    RobotModeTriggers.disabled()
-        .whileTrue(
-            new StartEndCommand(
-                () -> controllerChecker.startPeriodic(0.5), () -> controllerChecker.stop()));
+    // RobotModeTriggers.disabled()
+    //     .whileTrue(
+    //         new StartEndCommand(
+    //             () -> controllerChecker.startPeriodic(0.5), () -> controllerChecker.stop()));
+    RobotModeTriggers.disabled().onFalse(new InstantCommand(() -> controllerChecker.stop()));
 
     configureAutoOptions();
   }
@@ -167,7 +168,9 @@ public class Robot extends LoggedRobot {
 
   /** This function is called once when the robot is disabled. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    controllerChecker.startPeriodic(0.5);
+  }
 
   /** This function is called periodically when disabled. */
   @Override
@@ -217,13 +220,14 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {}
 
   private void configureControlPanelBindings() {
-      // ZORRO is always preferred as driver in REAL and SIM mode
-      controllerSelector.addConfig(
+    // ZORRO is always preferred as driver in REAL and SIM mode
+    controllerSelector.addConfig(
         new ControllerConfig(
             ControllerFunction.DRIVER,
             ControllerType.ZORRO,
             this::bindZorroDriver,
-            Constants.Mode.REAL, Constants.Mode.SIM));
+            Constants.Mode.REAL,
+            Constants.Mode.SIM));
 
     // XBOX is always preferred as operator in REAL and SIM mode
     controllerSelector.addConfig(
@@ -231,15 +235,19 @@ public class Robot extends LoggedRobot {
             ControllerFunction.OPERATOR,
             ControllerType.XBOX,
             this::bindXboxOperator,
-            Constants.Mode.REAL, Constants.Mode.SIM));
+            Constants.Mode.REAL,
+            Constants.Mode.SIM));
 
-    // XBOX is permitted as driver in SIM mode only
+    // XBOX is permitted as driver in REAL and SIM mode
     controllerSelector.addConfig(
         new ControllerConfig(
             ControllerFunction.DRIVER,
             ControllerType.XBOX,
             this::bindXboxDriver,
+            Constants.Mode.REAL,
             Constants.Mode.SIM));
+
+    controllerSelector.bindControlPanel();
   }
 
   public void bindZorroDriver(int port) {

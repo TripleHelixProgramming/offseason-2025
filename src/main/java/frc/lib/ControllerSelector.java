@@ -2,7 +2,7 @@ package frc.lib;
 
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.Mode;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,29 +14,25 @@ import java.util.function.IntConsumer;
 import org.littletonrobotics.junction.Logger;
 
 /**
- * This class manages the selection and binding of controllers for driver and operator roles.
- * It supports different controller types and configurations based on the robot's mode (REAL or SIM).
+ * This class manages the selection and binding of controllers for driver and operator roles. It
+ * supports different controller types and configurations based on the robot's mode (REAL or SIM).
  * The class scans for connected controllers, prioritizes them based on a predefined configuration,
  * and binds the appropriate commands to the selected controllers.
  *
  * <p>**Important:** The selection of controllers is prioritized in the order that configurations
- * are added. The first matching configuration found during the scan will be used.  Note also
- * that the driver controller is always found first, and the operator controller will not
- * consider the port used by the driver controller.
-*/
+ * are added. The first matching configuration found during the scan will be used. Note also that
+ * the driver controller is always found first, and the operator controller will not consider the
+ * port used by the driver controller.
+ */
 public class ControllerSelector {
 
-  /**
-   * Defines the possible functions for a controller: DRIVER or OPERATOR.
-   */
+  /** Defines the possible functions for a controller: DRIVER or OPERATOR. */
   public enum ControllerFunction {
     DRIVER,
     OPERATOR
   }
 
-  /**
-   * Defines the choices of controller hardware.
-   */
+  /** Defines the choices of controller hardware. */
   public enum ControllerType {
     ZORRO("Zorro"),
     XBOX("XBOX"),
@@ -56,8 +52,8 @@ public class ControllerSelector {
 
   /**
    * A data class that encapsulates the configuration for a controller binding. It includes the
-   * modes in which the configuration is valid, the controller function (DRIVER or OPERATOR),
-   * the controller type, and a callback function to bind the controller's commands.
+   * modes in which the configuration is valid, the controller function (DRIVER or OPERATOR), the
+   * controller type, and a callback function to bind the controller's commands.
    */
   public static class ControllerConfig {
     public final Set<Mode> modes;
@@ -70,9 +66,9 @@ public class ControllerSelector {
      *
      * @param controllerFunction The function of the controller (DRIVER or OPERATOR).
      * @param controllerType The type of the controller (e.g., XBOX, ZORRO).
-     * @param bindingCallback The callback function that binds the controller's commands.  This function
-     *                        takes the port number of the controller as an argument.
-     * @param modes          The modes in which this configuration is valid (REAL, SIM, or both).
+     * @param bindingCallback The callback function that binds the controller's commands. This
+     *     function takes the port number of the controller as an argument.
+     * @param modes The modes in which this configuration is valid (REAL, SIM, or both).
      */
     public ControllerConfig(
         ControllerFunction controllerFunction,
@@ -138,26 +134,40 @@ public class ControllerSelector {
     controllerConfigs.add(config);
   }
 
-  /**
-   * Rebinds the control panel based on the current mode and connected controllers.
-   * This method performs the following steps:
-   * 1. Checks if the connected controllers have changed. If not, it returns immediately.
-   * 2. Resets the driver and operator ports and configurations.
-   * 3. Scans for a driver controller.
-   * 4. Scans for an operator controller, excluding the port used by the driver.
-   * 5. If a driver controller is found, it binds the controller's commands and updates the
-   *    SmartDashboard and Logger with the driver's information.
-   * 6. If an operator controller is found, it binds the controller's commands and updates the
-   *    SmartDashboard and Logger with the operator's information.
-   * 7. If no driver or operator controllers are found, it displays a warning on the SmartDashboard
-   *    and Logger.
-   * 8. If no controllers are connected, it sets the RobotController to brownout voltage to signal
-   *    that no controllers are connected.
-   */
   public void rebindControlPanel() {
     if (!controllersChanged()) {
       return;
     }
+    bindControlPanel();
+  }
+
+  /**
+   * Rebinds the control panel based on the current mode and connected controllers. This method
+   * performs the following steps:
+   *
+   * <p>1. Checks if the connected controllers have changed. If not, it returns immediately.
+   *
+   * <p>2. Resets the driver and operator ports and configurations.
+   *
+   * <p>3. Scans for a driver controller.
+   *
+   * <p>4. Scans for an operator controller, excluding the port used by the driver.
+   *
+   * <p>5. If a driver controller is found, it binds the controller's commands and updates the
+   * SmartDashboard and Logger with the driver's information.
+   *
+   * <p>6. If an operator controller is found, it binds the controller's commands and updates the
+   * SmartDashboard and Logger with the operator's information.
+   *
+   * <p>7. If no driver or operator controllers are found, it displays a warning on the
+   * SmartDashboard and Logger.
+   *
+   * <p>8. If no controllers are connected, it sets the RobotController to brownout voltage to
+   * signal that no controllers are connected.
+   */
+  public void bindControlPanel() {
+    // Clear any active buttons
+    CommandScheduler.getInstance().getDefaultButtonLoop().clear();
 
     driverPort = -1;
     operatorPort = -1;
@@ -165,26 +175,30 @@ public class ControllerSelector {
     operatorConfig = null;
 
     scanForController(ControllerFunction.DRIVER, -1);
-    scanForController(ControllerFunction.OPERATOR, driverPort);
+    if (driverConfig != null) {
+      scanForController(ControllerFunction.OPERATOR, driverPort);
+    }
 
     // Bind Driver Controller
     if (driverPort != -1 && driverConfig != null) {
       driverConfig.bindingCallback.accept(driverPort);
-      SmartDashboard.putString("Driver Controller", driverConfig.controllerType + " on port " + driverPort);
-      Logger.recordOutput("ControllerSelector/DriverController", driverConfig.controllerType + " on port " + driverPort);
+      Logger.recordOutput(
+          "ControllerSelector/DriverController",
+          driverConfig.controllerType + " on port " + driverPort);
     } else {
-      SmartDashboard.putString("Driver Controller", "WARNING: No Driver Controller Found!");
-      Logger.recordOutput("ControllerSelector/DriverController", "WARNING: No Driver Controller Found!");
+      Logger.recordOutput(
+          "ControllerSelector/DriverController", "WARNING: No Driver Controller Found!");
     }
 
     // Bind Operator Controller
     if (operatorPort != -1 && operatorConfig != null) {
       operatorConfig.bindingCallback.accept(operatorPort);
-      SmartDashboard.putString("Operator Controller", operatorConfig.controllerType + " on port " + operatorPort);
-      Logger.recordOutput("ControllerSelector/OperatorController", operatorConfig.controllerType + " on port " + operatorPort);
+      Logger.recordOutput(
+          "ControllerSelector/OperatorController",
+          operatorConfig.controllerType + " on port " + operatorPort);
     } else {
-      SmartDashboard.putString("Operator Controller", "WARNING: No Operator Controller Found!");
-      Logger.recordOutput("ControllerSelector/OperatorController", "WARNING: No Operator Controller Found!");
+      Logger.recordOutput(
+          "ControllerSelector/OperatorController", "WARNING: No Operator Controller Found!");
     }
 
     if (driverPort == -1 && operatorPort == -1) {
@@ -196,13 +210,13 @@ public class ControllerSelector {
   /**
    * Scans for a controller of the specified function (DRIVER or OPERATOR).
    *
-   * This method iterates through the available controller configurations and attempts to find a
+   * <p>This method iterates through the available controller configurations and attempts to find a
    * matching controller connected to the robot. The search is performed based on the controller's
    * mode, function, and type.
    *
    * @param controllerFunction The function of the controller to scan for (DRIVER or OPERATOR).
-   * @param excludedPort       The port number to exclude from the scan (used to prevent assigning
-   *                           the same controller to both driver and operator).
+   * @param excludedPort The port number to exclude from the scan (used to prevent assigning the
+   *     same controller to both driver and operator).
    */
   private void scanForController(ControllerFunction controllerFunction, int excludedPort) {
     for (int port = 0; port < 6; port++) {
@@ -234,9 +248,10 @@ public class ControllerSelector {
   /**
    * Checks if the controller connected to the specified port matches the given controller type.
    *
-   * @param port          The port number of the controller to check.
+   * @param port The port number of the controller to check.
    * @param controllerType The type of controller to match (e.g., XBOX, ZORRO).
-   * @return TRUE if the controller type contains the controller name (case-insensitive), FALSE otherwise.
+   * @return TRUE if the controller type contains the controller name (case-insensitive), FALSE
+   *     otherwise.
    */
   private boolean checkControllerType(int port, ControllerType controllerType) {
     var controllerName = controllers.get(port).getName();
