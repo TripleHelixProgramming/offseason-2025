@@ -55,7 +55,6 @@ public class Robot extends LoggedRobot {
   private final AutoSelector autoSelector =
       new AutoSelector(
           AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
-  private final ControllerSelector controllerSelector;
   private Notifier controllerChecker;
 
   // Subsystems
@@ -135,10 +134,9 @@ public class Robot extends LoggedRobot {
 
     // Start AdvantageKit logger
     Logger.start();
-
-    controllerSelector = new ControllerSelector(Constants.currentMode);
     configureControlPanelBindings();
-    controllerChecker = new Notifier(() -> controllerSelector.rebindControlPanel());
+    controllerChecker = new Notifier(() -> ControllerSelector.getInstance().scanAndRebind());
+
     // RobotModeTriggers.disabled()
     //     .whileTrue(
     //         new StartEndCommand(
@@ -220,34 +218,28 @@ public class Robot extends LoggedRobot {
   public void simulationPeriodic() {}
 
   private void configureControlPanelBindings() {
-    // ZORRO is always preferred as driver in REAL and SIM mode
-    controllerSelector.addConfig(
-        new ControllerConfig(
-            ControllerFunction.DRIVER,
-            ControllerType.ZORRO,
-            this::bindZorroDriver,
-            Constants.Mode.REAL,
-            Constants.Mode.SIM));
-
-    // XBOX is always preferred as operator in REAL and SIM mode
-    controllerSelector.addConfig(
-        new ControllerConfig(
-            ControllerFunction.OPERATOR,
-            ControllerType.XBOX,
-            this::bindXboxOperator,
-            Constants.Mode.REAL,
-            Constants.Mode.SIM));
-
-    // XBOX is permitted as driver in REAL and SIM mode
-    controllerSelector.addConfig(
-        new ControllerConfig(
-            ControllerFunction.DRIVER,
-            ControllerType.XBOX,
-            this::bindXboxDriver,
-            Constants.Mode.REAL,
-            Constants.Mode.SIM));
-
-    controllerSelector.bindControlPanel();
+    ControllerSelector.configure(
+   // ZORRO is always preferred as driver in REAL and SIM mode
+   new ControllerConfig(
+                ControllerFunction.DRIVER,
+                ControllerType.ZORRO,
+                this::bindZorroDriver,
+                Constants.Mode.REAL,
+                Constants.Mode.SIM),
+     // XBOX is always preferred as operator in REAL and SIM mode
+     new ControllerConfig(
+                ControllerFunction.OPERATOR,
+                ControllerType.XBOX,
+                this::bindXboxOperator,
+                Constants.Mode.REAL,
+                Constants.Mode.SIM),
+     // XBOX is permitted as driver in REAL and SIM mode
+     new ControllerConfig(
+                ControllerFunction.DRIVER,
+                ControllerType.XBOX,
+                this::bindXboxDriver,
+                Constants.Mode.REAL,
+                Constants.Mode.SIM));
   }
 
   public void bindZorroDriver(int port) {
