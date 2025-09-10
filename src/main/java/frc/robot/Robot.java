@@ -207,27 +207,27 @@ public class Robot extends LoggedRobot {
 
   private void configureControlPanelBindings() {
     ControllerSelector.configure(
-   // ZORRO is always preferred as driver in REAL and SIM mode
-   new ControllerConfig(
-                ControllerFunction.DRIVER,
-                ControllerType.ZORRO,
-                this::bindZorroDriver,
-                Constants.Mode.REAL,
-                Constants.Mode.SIM),
-     // XBOX is always preferred as operator in REAL and SIM mode
-     new ControllerConfig(
-                ControllerFunction.OPERATOR,
-                ControllerType.XBOX,
-                this::bindXboxOperator,
-                Constants.Mode.REAL,
-                Constants.Mode.SIM),
-     // XBOX is permitted as driver in REAL and SIM mode
-     new ControllerConfig(
-                ControllerFunction.DRIVER,
-                ControllerType.XBOX,
-                this::bindXboxDriver,
-                Constants.Mode.REAL,
-                Constants.Mode.SIM));
+        // ZORRO is always preferred as driver in REAL and SIM mode
+        new ControllerConfig(
+            ControllerFunction.DRIVER,
+            ControllerType.ZORRO,
+            this::bindZorroDriver,
+            Constants.Mode.REAL,
+            Constants.Mode.SIM),
+        // XBOX is always preferred as operator in REAL and SIM mode
+        new ControllerConfig(
+            ControllerFunction.OPERATOR,
+            ControllerType.XBOX,
+            this::bindXboxOperator,
+            Constants.Mode.REAL,
+            Constants.Mode.SIM),
+        // XBOX is permitted as driver in REAL and SIM mode
+        new ControllerConfig(
+            ControllerFunction.DRIVER,
+            ControllerType.XBOX,
+            this::bindXboxDriver,
+            Constants.Mode.REAL,
+            Constants.Mode.SIM));
   }
 
   public void bindZorroDriver(int port) {
@@ -272,24 +272,14 @@ public class Robot extends LoggedRobot {
     var xboxDriver = new CommandXboxController(port);
 
     // Drive in field-relative mode while left bumper is released
-    xboxDriver
-        .leftBumper()
-        .whileFalse(
-            DriveCommands.fieldRelativeJoystickDrive(
-                drive,
-                () -> -xboxDriver.getLeftY(),
-                () -> -xboxDriver.getLeftX(),
-                () -> -xboxDriver.getRightX()));
-
     // Drive in robot-relative mode while left bumper is pressed
-    xboxDriver
-        .leftBumper()
-        .whileTrue(
-            DriveCommands.robotRelativeJoystickDrive(
-                drive,
-                () -> -xboxDriver.getLeftY(),
-                () -> -xboxDriver.getLeftX(),
-                () -> -xboxDriver.getRightX()));
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -xboxDriver.getLeftY(),
+            () -> -xboxDriver.getLeftX(),
+            () -> -xboxDriver.getRightX(),
+            () -> !xboxDriver.getHID().getLeftBumperButton()));
 
     // Reset gyro to 0° when B button is pressed
     xboxDriver

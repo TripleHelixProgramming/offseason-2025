@@ -4,7 +4,6 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -28,9 +27,8 @@ import org.littletonrobotics.junction.Logger;
  * <p>1. Call the static {@code configure()} method a single time in {@code robotInit()} to set up
  * the desired controller configurations.
  *
- * <p>2. Periodically call {@code ControllerSelector.getInstance().scan()} from a loop in
- * your robot code (e.g., using a Notifier or from {@code disabledPeriodic()}) to handle controller
- * changes.
+ * <p>2. Periodically call {@code ControllerSelector.getInstance().scan()} from a loop in your robot
+ * code (e.g., using a Notifier or from {@code disabledPeriodic()}) to handle controller changes.
  */
 public class ControllerSelector {
 
@@ -69,8 +67,8 @@ public class ControllerSelector {
   }
 
   /**
-   * Defines the supported controller hardware types and the string to identify them by in the driver
-   * station.
+   * Defines the supported controller hardware types and the string to identify them by in the
+   * driver station.
    */
   public enum ControllerType {
     ZORRO("Zorro"),
@@ -181,15 +179,15 @@ public class ControllerSelector {
    * <p>3. Iterates through the configurations to find the highest-priority match for the DRIVER
    * controller. If found, its binding callback is executed immediately.
    *
-   * <p>4. Iterates again to find the highest-priority match for the OPERATOR controller, ensuring it
-   * doesn't use the same port as the driver. If found, its binding callback is executed
+   * <p>4. Iterates again to find the highest-priority match for the OPERATOR controller, ensuring
+   * it doesn't use the same port as the driver. If found, its binding callback is executed
    * immediately.
    *
    * <p>5. Logs the final controller assignments.
    */
   public void scan() {
     if (!controllersChanged()) {
-      return; 
+      return;
     }
 
     // Clear all button bindings to prepare for rebinding
