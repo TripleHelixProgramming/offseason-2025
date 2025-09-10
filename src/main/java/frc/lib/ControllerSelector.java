@@ -4,6 +4,8 @@ import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.Mode;
+
+import java.lang.invoke.VarHandle.VarHandleDesc;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -219,28 +221,24 @@ public class ControllerSelector {
    *     same controller to both driver and operator).
    */
   private void scanForController(ControllerFunction controllerFunction, int excludedPort) {
-    for (int port = 0; port < 6; port++) {
-      if (port == excludedPort) continue;
+    for (var config : controllerConfigs) {
+      if (!config.modes.contains(mode) || config.controllerFunction != controllerFunction) {
+        continue; // Skip configurations that don't match the current mode or function
+      }
+      for (int port = 0; port < 6; port++) {
+        if (port == excludedPort) continue;
 
-      int currentPort = port;
-      Optional<ControllerConfig> matchingConfig =
-          controllerConfigs.stream()
-              .filter(
-                  config ->
-                      config.modes.contains(mode)
-                          && config.controllerFunction == controllerFunction
-                          && checkControllerType(currentPort, config.controllerType))
-              .findFirst();
-
-      if (matchingConfig.isPresent()) {
-        if (controllerFunction == ControllerFunction.DRIVER) {
-          driverPort = currentPort;
-          driverConfig = matchingConfig.get();
-        } else {
-          operatorPort = currentPort;
-          operatorConfig = matchingConfig.get();
+        int currentPort = port;
+        if (checkControllerType(currentPort, config.controllerType)) {
+          if (controllerFunction == ControllerFunction.DRIVER) {
+            driverPort = currentPort;
+            driverConfig = config;
+          } else {
+            operatorPort = currentPort;
+            operatorConfig = config;
+          }
+          return; // Exit after finding the first suitable controller
         }
-        return; // Exit after finding the first suitable controller
       }
     }
   }
