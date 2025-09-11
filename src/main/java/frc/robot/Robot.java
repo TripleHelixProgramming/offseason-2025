@@ -286,8 +286,8 @@ public class Robot extends LoggedRobot {
                     drive)
                 .ignoringDisable(true));
 
-    // Lock to 0° while button A is held
-    driver.AIn().whileTrue(getPathOnTheFlyCommand());
+    // Drive 1m forward when button A is pressed
+    driver.AIn().whileTrue(AutoBuilder.followPath(getPathOnTheFly()));
 
     // Switch to X pattern when button D is pressed
     driver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -300,7 +300,7 @@ public class Robot extends LoggedRobot {
     autoSelector.addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(drive)));
   }
 
-  public Command getPathOnTheFlyCommand() {
+  public PathPlannerPath getPathOnTheFly() {
     // Create a list of waypoints from poses. Each pose represents one waypoint.
     // The rotation component of the pose should be the direction of travel. Do not use holonomic
     // rotation.
@@ -336,8 +336,7 @@ public class Robot extends LoggedRobot {
     // Prevent the path from being flipped if the coordinates are already correct
     path.preventFlipping = true;
 
-    // Create a path following command using AutoBuilder. This will also trigger event markers.
-    return AutoBuilder.followPath(path);
+    return path;
   }
 
   public Command getPathFromFileCommand() {
