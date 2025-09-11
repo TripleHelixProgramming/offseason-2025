@@ -13,14 +13,8 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.MetersPerSecond;
-import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
-import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -309,21 +303,11 @@ public class Robot extends LoggedRobot {
             drive.getPose(),
             drive.getPose().transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
 
-    PathConstraints constraints =
-        new PathConstraints(
-            DriveConstants.maxChassisSpeed.in(MetersPerSecond),
-            DriveConstants.maxChassisAcceleration.in(MetersPerSecondPerSecond),
-            DriveConstants.maxChassisAngularVelocity.in(RadiansPerSecond),
-            DriveConstants.maxChassisAngularAcceleration.in(
-                RadiansPerSecondPerSecond)); // The constraints for this path.
-    // PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use
-    // unlimited constraints, only limited by motor torque and nominal battery voltage
-
     // Create the path using the waypoints created above
     PathPlannerPath path =
         new PathPlannerPath(
             waypoints,
-            constraints,
+            DriveConstants.constraints,
             null, // The ideal starting state, this is only relevant for pre-planned paths, so can
             // be null for on-the-fly paths.
             new GoalEndState(
