@@ -304,7 +304,9 @@ public class Robot extends LoggedRobot {
     // The rotation component of the pose should be the direction of travel. Do not use holonomic
     // rotation.
     List<Waypoint> waypoints =
-        PathPlannerPath.waypointsFromPoses(new Pose2d(1.0, 0.0, Rotation2d.fromDegrees(0)));
+        PathPlannerPath.waypointsFromPoses(
+            new Pose2d(1.0, 0.0, Rotation2d.fromDegrees(0)),
+            new Pose2d(2.0, 0.0, Rotation2d.fromDegrees(0)));
 
     PathConstraints constraints =
         new PathConstraints(
