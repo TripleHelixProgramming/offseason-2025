@@ -25,6 +25,7 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID;
@@ -305,8 +306,8 @@ public class Robot extends LoggedRobot {
     // rotation.
     List<Waypoint> waypoints =
         PathPlannerPath.waypointsFromPoses(
-            new Pose2d(1.0, 0.0, Rotation2d.fromDegrees(0)),
-            new Pose2d(2.0, 0.0, Rotation2d.fromDegrees(0)));
+            drive.getPose(),
+            drive.getPose().transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
 
     PathConstraints constraints =
         new PathConstraints(
