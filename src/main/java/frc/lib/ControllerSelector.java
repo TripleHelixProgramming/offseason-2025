@@ -166,6 +166,20 @@ public class ControllerSelector {
     return changed;
   }
 
+    /**
+     * Checks if a controller name matches the expected controller type, handling nulls and case-insensitivity.
+     *
+     * @param controllerName The name of the controller to check.
+     * @param controllerType The expected type of the controller.
+     * @return True if the controller name matches the controller type, false otherwise.
+     */
+    private boolean controllerNameMatchesType(String controllerName, ControllerType controllerType) {
+        if (controllerName == null) {
+            return false;
+        }
+        return controllerName.toLowerCase().contains(controllerType.getDeviceName().toLowerCase());
+    }
+
   /**
    * Scans for controller changes and re-binds controls if necessary. This method should be called
    * periodically (e.g., in disabledPeriodic or a dedicated Notifier).
@@ -210,8 +224,7 @@ public class ControllerSelector {
 
       // The inner loop checks all controller ports for a name match
       for (int port = 0; port < NUM_CONTROLLER_PORTS; port++) {
-        var controllerName = controllerNames[port];
-        if (controllerName != null && controllerNames[port].contains(config.controllerType.getDeviceName())) {
+        if (controllerNameMatchesType(controllerNames[port], config.controllerType)) {
           driverPort = port;
           driverConfig = config;
           // Bind and log immediately
@@ -246,8 +259,7 @@ public class ControllerSelector {
         if (port == driverPort) {
           continue; // Don't bind the same physical controller to both roles
         }
-        var controllerName = controllerNames[port];
-        if (controllerName != null && controllerNames[port].contains(config.controllerType.getDeviceName())) {
+        if (controllerNameMatchesType(controllerNames[port], config.controllerType)) {
           operatorPort = port;
           operatorConfig = config;
           // Bind and log immediately
