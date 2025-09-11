@@ -241,9 +241,9 @@ public class ControllerSelector {
     }
 
     // If no driver was found after checking all configs, log it.
-    if (driverPort == -1) {
+    if (driverPort < 0) {
       Logger.recordOutput("Controller/DriverPort", "Not Found");
-      Logger.recordOutput("Controller/DriverType", "None");
+      Logger.recordOutput("Controller/DriverType", driverPort);
     }
 
     // --- Find and bind OPERATOR controller ---
@@ -277,8 +277,8 @@ public class ControllerSelector {
 
     // If no operator was found after checking all configs, log it.
     if (operatorPort == -1) {
-      Logger.recordOutput("Controller/OperatorPort", "Not Found");
-      Logger.recordOutput("Controller/OperatorType", "None");
+      Logger.recordOutput("Controller/OperatorPort", operatorPort);
+      Logger.recordOutput("Controller/OperatorType", "Not Found");
     }
   }
 }
