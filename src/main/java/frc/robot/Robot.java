@@ -13,6 +13,11 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.MetersPerSecondPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RadiansPerSecondPerSecond;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
@@ -41,6 +46,7 @@ import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOBoron;
 import frc.robot.subsystems.drive.ModuleIO;
@@ -310,7 +316,12 @@ public class Robot extends LoggedRobot {
             new Pose2d(5.0, 3.0, Rotation2d.fromDegrees(90)));
 
     PathConstraints constraints =
-        new PathConstraints(3.0, 3.0, 2 * Math.PI, 4 * Math.PI); // The constraints for this path.
+        new PathConstraints(
+            DriveConstants.maxChassisSpeed.in(MetersPerSecond),
+            DriveConstants.maxChassisAcceleration.in(MetersPerSecondPerSecond),
+            DriveConstants.maxChassisAngularVelocity.in(RadiansPerSecond),
+            DriveConstants.maxChassisAngularAcceleration.in(
+                RadiansPerSecondPerSecond)); // The constraints for this path.
     // PathConstraints constraints = PathConstraints.unlimitedConstraints(12.0); // You can also use
     // unlimited constraints, only limited by motor torque and nominal battery voltage
 

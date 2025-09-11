@@ -21,6 +21,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.AngularAcceleration;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -31,6 +33,10 @@ import frc.robot.Constants.MotorConstants.NEOVortexConstants;
 public class DriveConstants {
   public static final LinearVelocity maxChassisSpeed = MetersPerSecond.of(2.5);
   public static final LinearAcceleration maxChassisAcceleration = MetersPerSecondPerSecond.of(2.5);
+
+  public static final AngularVelocity maxChassisAngularVelocity = RadiansPerSecond.of(2 * Math.PI);
+  public static final AngularAcceleration maxChassisAngularAcceleration =
+      RadiansPerSecondPerSecond.of(4 * Math.PI);
 
   public static final double odometryFrequency = 100.0; // Hz
   private static final double wheelBase = Units.inchesToMeters(27);
