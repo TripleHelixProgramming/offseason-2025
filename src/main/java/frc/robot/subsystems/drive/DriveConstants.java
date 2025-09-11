@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Distance;
+import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
@@ -29,6 +30,8 @@ import frc.robot.Constants.MotorConstants.NEOVortexConstants;
 
 public class DriveConstants {
   public static final LinearVelocity maxChassisSpeed = MetersPerSecond.of(2.5);
+  public static final LinearAcceleration maxChassisAcceleration = MetersPerSecondPerSecond.of(2.5);
+
   public static final double odometryFrequency = 100.0; // Hz
   private static final double wheelBase = Units.inchesToMeters(27);
   private static final double trackWidth = Units.inchesToMeters(21);
@@ -125,7 +128,7 @@ public class DriveConstants {
           robotMOI.in(KilogramSquareMeters),
           new ModuleConfig(
               wheelRadius.in(Meters),
-              maxChassisSpeed.in(MetersPerSecond),
+              maxWheelSpeed.in(MetersPerSecond),
               wheelCOF,
               driveGearbox.withReduction(driveMotorReduction),
               NEOVortexConstants.kDefaultCurrentLimit,
