@@ -210,7 +210,8 @@ public class ControllerSelector {
 
       // The inner loop checks all controller ports for a name match
       for (int port = 0; port < NUM_CONTROLLER_PORTS; port++) {
-        if (controllerNames[port].contains(config.controllerType.getDeviceName())) {
+        var controllerName = controllerNames[port];
+        if (controllerName != null && controllerNames[port].contains(config.controllerType.getDeviceName())) {
           driverPort = port;
           driverConfig = config;
           // Bind and log immediately
@@ -245,7 +246,8 @@ public class ControllerSelector {
         if (port == driverPort) {
           continue; // Don't bind the same physical controller to both roles
         }
-        if (controllerNames[port].contains(config.controllerType.getDeviceName())) {
+        var controllerName = controllerNames[port];
+        if (controllerName != null && controllerNames[port].contains(config.controllerType.getDeviceName())) {
           operatorPort = port;
           operatorConfig = config;
           // Bind and log immediately
