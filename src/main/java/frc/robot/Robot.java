@@ -286,13 +286,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Lock to 0° while button A is held
-    driver.AIn()
-        .whileTrue(
-            DriveCommands.joystickDriveAtFixedOrientation(
-                drive,
-                () -> -driver.getRightYAxis(),
-                () -> -driver.getRightXAxis(),
-                () -> Rotation2d.kZero));
+    driver.AIn().whileTrue(getPathOnTheFlyCommand());
 
     // Switch to X pattern when button D is pressed
     driver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -310,10 +304,7 @@ public class Robot extends LoggedRobot {
     // The rotation component of the pose should be the direction of travel. Do not use holonomic
     // rotation.
     List<Waypoint> waypoints =
-        PathPlannerPath.waypointsFromPoses(
-            new Pose2d(1.0, 1.0, Rotation2d.fromDegrees(0)),
-            new Pose2d(3.0, 1.0, Rotation2d.fromDegrees(0)),
-            new Pose2d(5.0, 3.0, Rotation2d.fromDegrees(90)));
+        PathPlannerPath.waypointsFromPoses(new Pose2d(1.0, 0.0, Rotation2d.fromDegrees(0)));
 
     PathConstraints constraints =
         new PathConstraints(
@@ -335,7 +326,7 @@ public class Robot extends LoggedRobot {
             new GoalEndState(
                 0.0,
                 Rotation2d.fromDegrees(
-                    -90)) // Goal end state. You can set a holonomic rotation here. If using a
+                    0)) // Goal end state. You can set a holonomic rotation here. If using a
             // differential drivetrain, the rotation will have no effect.
             );
 
