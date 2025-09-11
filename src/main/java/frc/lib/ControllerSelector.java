@@ -1,5 +1,6 @@
 package frc.lib;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants;
@@ -120,8 +121,7 @@ public class ControllerSelector {
     }
   }
 
-  // TODO: Is this number actually defined as a constant somewhere in WPILlib?
-  private static final int NUM_CONTROLLER_PORTS = 6;
+  private static final int NUM_CONTROLLER_PORTS = DriverStation.kJoystickPorts;
 
   private final ControllerConfig[] controllerConfigs;
   private final GenericHID[] controllers;
