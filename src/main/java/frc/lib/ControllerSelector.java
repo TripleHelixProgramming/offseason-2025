@@ -166,19 +166,20 @@ public class ControllerSelector {
     return changed;
   }
 
-    /**
-     * Checks if a controller name matches the expected controller type, handling nulls and case-insensitivity.
-     *
-     * @param controllerName The name of the controller to check.
-     * @param controllerType The expected type of the controller.
-     * @return True if the controller name matches the controller type, false otherwise.
-     */
-    private boolean controllerNameMatchesType(String controllerName, ControllerType controllerType) {
-        if (controllerName == null) {
-            return false;
-        }
-        return controllerName.toLowerCase().contains(controllerType.getDeviceName().toLowerCase());
+  /**
+   * Checks if a controller name matches the expected controller type, handling nulls and
+   * case-insensitivity.
+   *
+   * @param controllerName The name of the controller to check.
+   * @param controllerType The expected type of the controller.
+   * @return True if the controller name matches the controller type, false otherwise.
+   */
+  private boolean controllerNameMatchesType(String controllerName, ControllerType controllerType) {
+    if (controllerName == null) {
+      return false;
     }
+    return controllerName.toLowerCase().contains(controllerType.getDeviceName().toLowerCase());
+  }
 
   /**
    * Scans for controller changes and re-binds controls if necessary. This method should be called
