@@ -209,8 +209,10 @@ public class ControllerSelector {
 
     int driverPort = -1;
     int operatorPort = -1;
-    ControllerConfig driverConfig = null;
-    ControllerConfig operatorConfig = null;
+    String driverType = "";
+    String operatorType = "";
+    String driverName = "Not Found";
+    String operatorName = "Not Found";
 
     // --- Find and bind DRIVER controller ---
     // The outer loop iterates through configurations, respecting the order they were added
@@ -224,13 +226,12 @@ public class ControllerSelector {
 
       // The inner loop checks all controller ports for a name match
       for (int port = 0; port < NUM_CONTROLLER_PORTS; port++) {
-        if (controllerNameMatchesType(controllerNames[port], config.controllerType)) {
+        var controllerName = controllerNames[port];
+        if (controllerNameMatchesType(controllerName, config.controllerType)) {
           driverPort = port;
-          driverConfig = config;
-          // Bind and log immediately
-          driverConfig.bindingCallback.accept(driverPort);
-          Logger.recordOutput("Controller/DriverPort", driverPort);
-          Logger.recordOutput("Controller/DriverType", driverConfig.controllerType.name());
+          driverName = controllerName;
+          driverType = config.controllerType.name();
+          config.bindingCallback.accept(driverPort);
           break; // Found a match, stop searching ports
         }
       }
@@ -240,11 +241,9 @@ public class ControllerSelector {
       }
     }
 
-    // If no driver was found after checking all configs, log it.
-    if (driverPort < 0) {
-      Logger.recordOutput("Controller/DriverPort", driverPort);
-      Logger.recordOutput("Controller/DriverType", "Not Found");
-    }
+    Logger.recordOutput("Controller/DriverPort", driverPort);
+    Logger.recordOutput("Controller/DriverType", driverType);
+    Logger.recordOutput("Controller/DriverDevice", driverName);
 
     // --- Find and bind OPERATOR controller ---
     for (ControllerConfig config : controllerConfigs) {
@@ -259,13 +258,12 @@ public class ControllerSelector {
         if (port == driverPort) {
           continue; // Don't bind the same physical controller to both roles
         }
-        if (controllerNameMatchesType(controllerNames[port], config.controllerType)) {
+        var controllerName = controllerNames[port];
+        if (controllerNameMatchesType(controllerName, config.controllerType)) {
           operatorPort = port;
-          operatorConfig = config;
-          // Bind and log immediately
-          operatorConfig.bindingCallback.accept(operatorPort);
-          Logger.recordOutput("Controller/OperatorPort", operatorPort);
-          Logger.recordOutput("Controller/OperatorType", operatorConfig.controllerType.name());
+          operatorName = controllerName;
+          operatorType = config.controllerType.name();
+          config.bindingCallback.accept(operatorPort);
           break; // Found a match, stop searching ports
         }
       }
@@ -275,10 +273,8 @@ public class ControllerSelector {
       }
     }
 
-    // If no operator was found after checking all configs, log it.
-    if (operatorPort == -1) {
-      Logger.recordOutput("Controller/OperatorPort", operatorPort);
-      Logger.recordOutput("Controller/OperatorType", "Not Found");
-    }
+    Logger.recordOutput("Controller/OperatorPort", operatorPort);
+    Logger.recordOutput("Controller/OperatorType", operatorType);
+    Logger.recordOutput("Controller/OperatorDevice", operatorName);
   }
 }
