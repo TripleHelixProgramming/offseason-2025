@@ -259,7 +259,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Drive 1m forward while button A is held
-    zorroDriver.AIn().whileTrue(getOnTheFlyPathCommand());
+    zorroDriver.AIn().whileTrue(advance1mForward());
 
     // Switch to X pattern when button D is pressed
     zorroDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -290,7 +290,10 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Drive 1m forward while A button is held
-    xboxDriver.a().whileTrue(getOnTheFlyPathCommand());
+    // xboxDriver.a().whileTrue(getOnTheFlyPathCommand());
+
+    // Drive to center of field, approaching in a straight line from 1 m away
+    xboxDriver.a().whileTrue(dockToTargetPose(new Pose2d(8.2296, 4.1148, Rotation2d.kZero)));
 
     // Switch to X pattern when X button is pressed
     xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -305,63 +308,76 @@ public class Robot extends LoggedRobot {
     autoSelector.addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(drive)));
   }
 
-  public Command getPathToTargetPose(Pose2d targetPose) {
-    // Create a list of waypoints from poses. Each pose represents one waypoint.
-    // The rotation component of the pose should be the direction of travel. Do not use holonomic
-    // rotation.
-    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(drive.getPose(), targetPose);
+  public Command goToTargetPose(Pose2d targetPose) {
+    var supplier =
+        new Supplier<Command>() {
+          @Override
+          public Command get() {
+            // Create a list of waypoints from poses. Each pose represents one waypoint.
+            // The rotation component of the pose should be the direction of travel. Do not use
+            // holonomic
+            // rotation.
+            List<Waypoint> waypoints =
+                PathPlannerPath.waypointsFromPoses(drive.getPose(), targetPose);
 
-    // Create the path using the waypoints created above
-    PathPlannerPath path =
-        new PathPlannerPath(
-            waypoints,
-            DriveConstants.constraints,
-            null, // The ideal starting state, this is only relevant for pre-planned paths, so can
-            // be null for on-the-fly paths.
-            new GoalEndState(
-                0.0,
-                Rotation2d.fromDegrees(
-                    0)) // Goal end state. You can set a holonomic rotation here. If using a
-            // differential drivetrain, the rotation will have no effect.
-            );
+            // Create the path using the waypoints created above
+            PathPlannerPath path =
+                new PathPlannerPath(
+                    waypoints,
+                    DriveConstants.constraints,
+                    // The ideal starting state, this is only relevant for pre-planned paths,
+                    // so can be null for on-the-fly paths.
+                    null,
+                    // Goal end state. You can set a holonomic rotation here. If using a
+                    // differential drivetrain, the rotation will have no effect.
+                    new GoalEndState(0.0, targetPose.getRotation()));
 
-    // Prevent the path from being flipped if the coordinates are already correct
-    path.preventFlipping = true;
+            // Prevent the path from being flipped if the coordinates are already correct
+            path.preventFlipping = true;
 
-    return AutoBuilder.followPath(path);
+            return AutoBuilder.followPath(path);
+          }
+        };
+    return new DeferredCommand(supplier, Set.of(drive));
   }
 
-  public Command getPathToPriorTargetPose(Pose2d targetPose) {
-    // Create a list of waypoints from poses. Each pose represents one waypoint.
-    // The rotation component of the pose should be the direction of travel. Do not use holonomic
-    // rotation.
-    List<Waypoint> waypoints =
-        PathPlannerPath.waypointsFromPoses(
-            drive.getPose(),
-            targetPose.transformBy(new Transform2d(-1.0, 0.0, Rotation2d.kZero)),
-            targetPose);
+  public Command dockToTargetPose(Pose2d targetPose) {
+    var supplier =
+        new Supplier<Command>() {
+          @Override
+          public Command get() {
+            // Create a list of waypoints from poses. Each pose represents one waypoint.
+            // The rotation component of the pose should be the direction of travel. Do not use
+            // holonomic
+            // rotation.
+            List<Waypoint> waypoints =
+                PathPlannerPath.waypointsFromPoses(
+                    drive.getPose(),
+                    targetPose.plus(new Transform2d(-1.0, 0.0, Rotation2d.kZero)),
+                    targetPose);
 
-    // Create the path using the waypoints created above
-    PathPlannerPath path =
-        new PathPlannerPath(
-            waypoints,
-            DriveConstants.constraints,
-            null, // The ideal starting state, this is only relevant for pre-planned paths, so can
-            // be null for on-the-fly paths.
-            new GoalEndState(
-                0.0,
-                Rotation2d.fromDegrees(
-                    0)) // Goal end state. You can set a holonomic rotation here. If using a
-            // differential drivetrain, the rotation will have no effect.
-            );
+            // Create the path using the waypoints created above
+            PathPlannerPath path =
+                new PathPlannerPath(
+                    waypoints,
+                    DriveConstants.constraints,
+                    // The ideal starting state, this is only relevant for pre-planned paths,
+                    // so can be null for on-the-fly paths.
+                    null,
+                    // Goal end state. You can set a holonomic rotation here. If using a
+                    // differential drivetrain, the rotation will have no effect.
+                    new GoalEndState(0.0, targetPose.getRotation()));
 
-    // Prevent the path from being flipped if the coordinates are already correct
-    path.preventFlipping = true;
+            // Prevent the path from being flipped if the coordinates are already correct
+            path.preventFlipping = true;
 
-    return AutoBuilder.followPath(path);
+            return AutoBuilder.followPath(path);
+          }
+        };
+    return new DeferredCommand(supplier, Set.of(drive));
   }
 
-  public Command getOnTheFlyPathCommand() {
+  public Command advance1mForward() {
     var supplier =
         new Supplier<Command>() {
           @Override
