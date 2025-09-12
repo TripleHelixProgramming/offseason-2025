@@ -36,7 +36,6 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
-
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -363,37 +362,37 @@ public class Robot extends LoggedRobot {
   }
 
   public Command getOnTheFlyPathCommand() {
-    var supplier = new Supplier<Command>() {
-      @Override
-      public Command get() {
-        // Create a list of waypoints from poses. Each pose represents one waypoint.
-        // The rotation component of the pose should be the direction of travel. Do not use holonomic
-        // rotation.
-        var waypoints =
-            PathPlannerPath.waypointsFromPoses(
-                drive.getPose(),
-                drive.getPose().transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
+    var supplier =
+        new Supplier<Command>() {
+          @Override
+          public Command get() {
+            // Create a list of waypoints from poses. Each pose represents one waypoint.
+            // The rotation component of the pose should be the direction of travel. Do not use
+            // holonomic
+            // rotation.
+            var waypoints =
+                PathPlannerPath.waypointsFromPoses(
+                    drive.getPose(),
+                    drive.getPose().plus(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
 
-        // Create the path using the waypoints created above
-        var path =
-            new PathPlannerPath(
-                waypoints,
-                DriveConstants.constraints,
-                null, // The ideal starting state, this is only relevant for pre-planned paths, so can
-                // be null for on-the-fly paths.
-                new GoalEndState(
-                    0.0,
-                    Rotation2d.fromDegrees(
-                        0)) // Goal end state. You can set a holonomic rotation here. If using a
-                // differential drivetrain, the rotation will have no effect.
-                );
+            // Create the path using the waypoints created above
+            var path =
+                new PathPlannerPath(
+                    waypoints,
+                    DriveConstants.constraints,
+                    // The ideal starting state, this is only relevant for pre-planned paths,
+                    // so can be null for on-the-fly paths.
+                    null,
+                    // Goal end state. You can set a holonomic rotation here. If using a
+                    // differential drivetrain, the rotation will have no effect.
+                    new GoalEndState(0.0, drive.getPose().getRotation()));
 
-        // Prevent the path from being flipped if the coordinates are already correct
-        path.preventFlipping = true;
+            // Prevent the path from being flipped if the coordinates are already correct
+            path.preventFlipping = true;
 
-        return AutoBuilder.followPath(path);
-      }
-    };
+            return AutoBuilder.followPath(path);
+          }
+        };
     return new DeferredCommand(supplier, Set.of(drive));
   }
 
