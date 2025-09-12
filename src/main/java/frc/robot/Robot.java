@@ -28,6 +28,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.DeferredCommand;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -48,6 +49,9 @@ import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Supplier;
+
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -281,7 +285,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Drive 1m forward when button A is pressed
-    driver.AIn().whileTrue(new PathOnTheFly().getCommand());
+    driver.AIn().whileTrue(getOnTheFlyPathCommand());
 
     // Switch to X pattern when button D is pressed
     driver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -350,38 +354,39 @@ public class Robot extends LoggedRobot {
     return AutoBuilder.followPath(path);
   }
 
-  public class PathOnTheFly {
+  public Command getOnTheFlyPathCommand() {
+    var supplier = new Supplier<Command>() {
+      @Override
+      public Command get() {
+        // Create a list of waypoints from poses. Each pose represents one waypoint.
+        // The rotation component of the pose should be the direction of travel. Do not use holonomic
+        // rotation.
+        var waypoints =
+            PathPlannerPath.waypointsFromPoses(
+                drive.getPose(),
+                drive.getPose().transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
 
-    public PathOnTheFly() {}
+        // Create the path using the waypoints created above
+        var path =
+            new PathPlannerPath(
+                waypoints,
+                DriveConstants.constraints,
+                null, // The ideal starting state, this is only relevant for pre-planned paths, so can
+                // be null for on-the-fly paths.
+                new GoalEndState(
+                    0.0,
+                    Rotation2d.fromDegrees(
+                        0)) // Goal end state. You can set a holonomic rotation here. If using a
+                // differential drivetrain, the rotation will have no effect.
+                );
 
-    public Command getCommand() {
-      // Create a list of waypoints from poses. Each pose represents one waypoint.
-      // The rotation component of the pose should be the direction of travel. Do not use holonomic
-      // rotation.
-      List<Waypoint> waypoints =
-          PathPlannerPath.waypointsFromPoses(
-              drive.getPose(),
-              drive.getPose().transformBy(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
+        // Prevent the path from being flipped if the coordinates are already correct
+        path.preventFlipping = true;
 
-      // Create the path using the waypoints created above
-      PathPlannerPath path =
-          new PathPlannerPath(
-              waypoints,
-              DriveConstants.constraints,
-              null, // The ideal starting state, this is only relevant for pre-planned paths, so can
-              // be null for on-the-fly paths.
-              new GoalEndState(
-                  0.0,
-                  Rotation2d.fromDegrees(
-                      0)) // Goal end state. You can set a holonomic rotation here. If using a
-              // differential drivetrain, the rotation will have no effect.
-              );
-
-      // Prevent the path from being flipped if the coordinates are already correct
-      path.preventFlipping = true;
-
-      return AutoBuilder.followPath(path);
-    }
+        return AutoBuilder.followPath(path);
+      }
+    };
+    return new DeferredCommand(supplier, Set.of(drive));
   }
 
   public Command getPathFromFileCommand() {
