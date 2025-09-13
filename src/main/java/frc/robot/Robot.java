@@ -1,5 +1,7 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -7,6 +9,7 @@ import com.pathplanner.lib.path.Waypoint;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -259,7 +262,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Drive 1m forward while button A is held
-    zorroDriver.AIn().whileTrue(advance1mForward());
+    zorroDriver.AIn().whileTrue(advanceForward(Meters.of(1)));
 
     // Switch to X pattern when button D is pressed
     zorroDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -293,7 +296,9 @@ public class Robot extends LoggedRobot {
     // xboxDriver.a().whileTrue(getOnTheFlyPathCommand());
 
     // Drive to center of field, approaching in a straight line from 1 m away
-    xboxDriver.a().whileTrue(dockToTargetPose(new Pose2d(8.2296, 4.1148, Rotation2d.kZero)));
+    xboxDriver
+        .a()
+        .whileTrue(dockToTargetPose(new Pose2d(8.2296, 4.1148, Rotation2d.kZero), Meters.of(1)));
 
     // Switch to X pattern when X button is pressed
     xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
@@ -341,7 +346,7 @@ public class Robot extends LoggedRobot {
     return new DeferredCommand(supplier, Set.of(drive));
   }
 
-  public Command dockToTargetPose(Pose2d targetPose) {
+  public Command dockToTargetPose(Pose2d targetPose, Distance leadDistance) {
     var supplier =
         new Supplier<Command>() {
           @Override
@@ -353,7 +358,7 @@ public class Robot extends LoggedRobot {
             List<Waypoint> waypoints =
                 PathPlannerPath.waypointsFromPoses(
                     drive.getPose(),
-                    targetPose.plus(new Transform2d(-1.0, 0.0, Rotation2d.kZero)),
+                    targetPose.plus(new Transform2d(leadDistance, Meters.of(0), Rotation2d.kZero)),
                     targetPose);
 
             // Create the path using the waypoints created above
@@ -377,7 +382,7 @@ public class Robot extends LoggedRobot {
     return new DeferredCommand(supplier, Set.of(drive));
   }
 
-  public Command advance1mForward() {
+  public Command advanceForward(Distance leadDistance) {
     var supplier =
         new Supplier<Command>() {
           @Override
@@ -389,7 +394,9 @@ public class Robot extends LoggedRobot {
             var waypoints =
                 PathPlannerPath.waypointsFromPoses(
                     drive.getPose(),
-                    drive.getPose().plus(new Transform2d(1.0, 0.0, Rotation2d.kZero)));
+                    drive
+                        .getPose()
+                        .plus(new Transform2d(leadDistance, Meters.of(0), Rotation2d.kZero)));
 
             // Create the path using the waypoints created above
             var path =
