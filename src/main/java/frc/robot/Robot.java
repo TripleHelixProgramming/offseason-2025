@@ -28,6 +28,7 @@ import frc.robot.subsystems.drive.GyroIOBoron;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.vision.Vision;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -51,6 +52,7 @@ public class Robot extends LoggedRobot {
 
   // Subsystems
   private Drive drive;
+  private Vision vision;
 
   public Robot() {
     // Record metadata
@@ -86,6 +88,7 @@ public class Robot extends LoggedRobot {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
+        vision = new Vision(drive);
         break;
 
       case SIM: // Running a physics simulator

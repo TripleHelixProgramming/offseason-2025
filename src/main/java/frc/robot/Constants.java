@@ -17,15 +17,10 @@ import static edu.wpi.first.units.Units.*;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.units.measure.AngularVelocity;
-
 import edu.wpi.first.wpilibj.Filesystem;
-
-
-
 import edu.wpi.first.wpilibj.RobotBase;
 
 /**
@@ -81,14 +76,13 @@ public final class Constants {
     public static final int kDefaultOperatorPort = 1;
   }
 
-
-public static final class VisionConstants {
-  // Define the standard deviations for the pose estimator, which determine how fast the pose
-  // estimate converges to the vision measurement. This should depend on the vision measurement
-  // noise and how many or how frequently vision measurements are applied to the pose estimator.
-  public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
-  public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
-  public static String kStemGymAprilTagLayoutPath =
-      Filesystem.getDeployDirectory() + "/stemgym.json";
-}
+  public static final class VisionConstants {
+    // Define the standard deviations for the pose estimator, which determine how fast the pose
+    // estimate converges to the vision measurement. This should depend on the vision measurement
+    // noise and how many or how frequently vision measurements are applied to the pose estimator.
+    public static final Matrix<N3, N1> kSingleTagStdDevs = VecBuilder.fill(4, 4, 8);
+    public static final Matrix<N3, N1> kMultiTagStdDevs = VecBuilder.fill(0.5, 0.5, 1);
+    public static String kStemGymAprilTagLayoutPath =
+        Filesystem.getDeployDirectory() + "/stemgym.json";
+  }
 }
