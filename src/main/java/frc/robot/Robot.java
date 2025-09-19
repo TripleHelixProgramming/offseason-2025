@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Meters;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -294,7 +293,7 @@ public class Robot extends LoggedRobot {
                 .ignoringDisable(true));
 
     // Drive 1m forward while A button is held
-    // xboxDriver.a().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
+    xboxDriver.a().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
 
     // Align with pose, approaching in correct orientation from 1 m away
     // xboxDriver
@@ -304,10 +303,10 @@ public class Robot extends LoggedRobot {
     //             drive, new Pose2d(8.2296, 4.1148, Rotation2d.kZero), Meters.of(1)));
 
     // Drive to point, approaching in correct orientation from 2 m away
-    xboxDriver
-        .a()
-        .whileTrue(
-            PathCommands.dockToTargetPoint(drive, new Translation2d(8.2296, 4.1148), Meters.of(2)));
+    // xboxDriver
+    //  .a()
+    // .whileTrue(
+    //     PathCommands.dockToTargetPoint(drive, new Translation2d(8.2296, 4.1148), Meters.of(2)));
 
     // Switch to X pattern when X button is pressed
     xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
