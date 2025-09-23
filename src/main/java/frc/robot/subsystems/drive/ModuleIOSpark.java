@@ -39,7 +39,6 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.Constants.MotorConstants.NEOConstants;
 import frc.robot.Constants.MotorConstants.NEOVortexConstants;
@@ -223,7 +222,7 @@ public class ModuleIOSpark implements ModuleIO {
   @Override
   public void updateInputs(ModuleIOInputs inputs) {
     BaseStatusSignal.refreshAll(turnPositionAbsolute);
-    inputs.turnPositionAbsolute = Units.rotationsToRadians(turnPositionAbsolute.getValueAsDouble());
+    inputs.turnAbsolutePosition = Rotation2d.fromRotations(turnPositionAbsolute.getValueAsDouble());
     // Update drive inputs
     sparkStickyFault = false;
     ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionRad = value);
