@@ -84,7 +84,7 @@ public class Vision extends SubsystemBase {
             poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureX().lt(toleranceRoll))
         .filter(
             poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureY().lt(tolerancePitch))
-        .filter(poseEst -> reachable(poseEst.pose().estimatedPose))
+        .filter(poseEst -> reachable(poseEst.pose().estimatedPose.toPose2d()))
         .sorted(
             (lhs, rhs) -> (int) Math.signum(lhs.pose.timestampSeconds - rhs.pose.timestampSeconds))
         .collect(Collectors.toList());
@@ -95,11 +95,11 @@ public class Vision extends SubsystemBase {
     return arena.contains(pose.toPose2d().getTranslation());
   }
 
-  private boolean reachable(Pose3d pose) {
+  private boolean reachable(Pose2d pose) {
     double maxTravelMeters =
         DriveConstants.maxChassisSpeed.times(Seconds.of(Robot.defaultPeriodSecs)).in(Meters);
     var currentPose = drivetrain.getPose().getTranslation();
-    var testPose = pose.toPose2d().getTranslation();
+    var testPose = pose.getTranslation();
     return currentPose.getDistance(testPose) < maxTravelMeters;
   }
 }
