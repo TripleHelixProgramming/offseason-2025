@@ -11,8 +11,6 @@ import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.Drive;
@@ -67,9 +65,9 @@ public class Vision extends SubsystemBase {
    */
   public List<EstimatedPoseWithStdevs> getPoseEstimates() {
     record Tuple<T1, T2, T3>(T1 t1, T2 t2, T3 t3) {}
-    Distance toleranceZ = Meters.of(0.5);
-    Angle toleranceRoll = Degrees.of(30);
-    Angle tolerancePitch = toleranceRoll;
+    double toleranceZMeters = 0.5;
+    double toleranceRollDegrees = 30;
+    double tolerancePitchDegrees = toleranceRollDegrees;
 
     return Arrays.stream(Camera.values())
         .map(
@@ -79,11 +77,16 @@ public class Vision extends SubsystemBase {
         .filter(tuple -> tuple.t1.isPresent())
         .map(tuple -> new EstimatedPoseWithStdevs(tuple.t1.get(), tuple.t2, tuple.t3))
         .filter(poseEst -> withinArena(poseEst.pose().estimatedPose))
-        .filter(poseEst -> poseEst.pose().estimatedPose.getMeasureZ().lt(toleranceZ))
         .filter(
-            poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureX().lt(toleranceRoll))
+            poseEst -> poseEst.pose().estimatedPose.getMeasureZ().abs(Meters) < toleranceZMeters)
         .filter(
-            poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureY().lt(tolerancePitch))
+            poseEst ->
+                poseEst.pose().estimatedPose.getRotation().getMeasureX().abs(Degrees)
+                    < toleranceRollDegrees)
+        .filter(
+            poseEst ->
+                poseEst.pose().estimatedPose.getRotation().getMeasureY().abs(Degrees)
+                    < tolerancePitchDegrees)
         .filter(poseEst -> reachable(poseEst.pose().estimatedPose.toPose2d()))
         .sorted(
             (lhs, rhs) -> (int) Math.signum(lhs.pose.timestampSeconds - rhs.pose.timestampSeconds))
