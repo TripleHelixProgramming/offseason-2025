@@ -96,7 +96,7 @@ public class DriveConstants {
           0.9
               * wheelRadius.in(Meters)
               * NEOVortexConstants.kFreeSpeed.in(RotationsPerSecond)
-              * driveMotorReduction);
+              / driveMotorReduction);
   public static final double driveEncoderVelocityFactor =
       (2 * Math.PI) / 60.0 / driveMotorReduction; // Rotor RPM -> Wheel Rad/Sec
 
@@ -123,8 +123,6 @@ public class DriveConstants {
   // Turn PID configuration
   public static final double turnKp = 2.0;
   public static final double turnKd = 0.0;
-  public static final double turnSimP = 8.0;
-  public static final double turnSimD = 0.0;
   public static final double turnPIDMinInput = 0; // Radians
   public static final double turnPIDMaxInput = 2 * Math.PI; // Radians
 
