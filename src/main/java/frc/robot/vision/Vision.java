@@ -1,5 +1,9 @@
 package frc.robot.vision;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Seconds;
+
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -13,11 +17,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
-
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Seconds;
-
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -81,8 +80,10 @@ public class Vision extends SubsystemBase {
         .map(tuple -> new EstimatedPoseWithStdevs(tuple.t1.get(), tuple.t2, tuple.t3))
         .filter(poseEst -> withinArena(poseEst.pose().estimatedPose))
         .filter(poseEst -> poseEst.pose().estimatedPose.getMeasureZ().lt(toleranceZ))
-        .filter(poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureX().lt(toleranceRoll))
-        .filter(poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureY().lt(tolerancePitch))
+        .filter(
+            poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureX().lt(toleranceRoll))
+        .filter(
+            poseEst -> poseEst.pose().estimatedPose.getRotation().getMeasureY().lt(tolerancePitch))
         .filter(poseEst -> reachable(poseEst.pose().estimatedPose))
         .sorted(
             (lhs, rhs) -> (int) Math.signum(lhs.pose.timestampSeconds - rhs.pose.timestampSeconds))
@@ -95,7 +96,8 @@ public class Vision extends SubsystemBase {
   }
 
   private boolean reachable(Pose3d pose) {
-    double maxTravelMeters = DriveConstants.maxChassisSpeed.times(Seconds.of(Robot.defaultPeriodSecs)).in(Meters);
+    double maxTravelMeters =
+        DriveConstants.maxChassisSpeed.times(Seconds.of(Robot.defaultPeriodSecs)).in(Meters);
     var currentPose = drivetrain.getPose().getTranslation();
     var testPose = pose.toPose2d().getTranslation();
     return currentPose.getDistance(testPose) < maxTravelMeters;
