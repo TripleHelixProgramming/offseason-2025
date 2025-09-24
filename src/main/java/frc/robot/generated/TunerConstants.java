@@ -120,7 +120,7 @@ public class TunerConstants {
               .withSteerMotorClosedLoopOutput(kSteerClosedLoopOutput)
               .withDriveMotorClosedLoopOutput(kDriveClosedLoopOutput)
               .withSlipCurrent(kSlipCurrent)
-              .withSpeedAt12Volts(DriveConstants.maxWheelSpeed)
+              .withSpeedAt12Volts(DriveConstants.maxDriveSpeed)
               .withDriveMotorType(kDriveMotorType)
               .withSteerMotorType(kSteerMotorType)
               .withFeedbackSource(kSteerFeedbackType)
@@ -131,22 +131,6 @@ public class TunerConstants {
               .withDriveInertia(kDriveInertia)
               .withSteerFrictionVoltage(kSteerFrictionVoltage)
               .withDriveFrictionVoltage(kDriveFrictionVoltage);
-
-  // Front Left
-  private static final boolean kFrontLeftSteerMotorInverted = true;
-  private static final boolean kFrontLeftEncoderInverted = false;
-
-  // Front Right
-  private static final boolean kFrontRightSteerMotorInverted = true;
-  private static final boolean kFrontRightEncoderInverted = false;
-
-  // Back Left
-  private static final boolean kBackLeftSteerMotorInverted = true;
-  private static final boolean kBackLeftEncoderInverted = false;
-
-  // Back Right
-  private static final boolean kBackRightSteerMotorInverted = true;
-  private static final boolean kBackRightEncoderInverted = false;
 
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
@@ -159,8 +143,8 @@ public class TunerConstants {
               DriveConstants.wheelBase.div(2.0),
               DriveConstants.trackWidth.div(2.0),
               kInvertLeftSide,
-              kFrontLeftSteerMotorInverted,
-              kFrontLeftEncoderInverted);
+              DriveConstants.turnInverted,
+              DriveConstants.turnEncoderInverted);
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       FrontRight =
@@ -172,8 +156,8 @@ public class TunerConstants {
               DriveConstants.wheelBase.div(2.0),
               DriveConstants.trackWidth.div(-2.0),
               kInvertRightSide,
-              kFrontRightSteerMotorInverted,
-              kFrontRightEncoderInverted);
+              DriveConstants.turnInverted,
+              DriveConstants.turnEncoderInverted);
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackLeft =
@@ -185,8 +169,8 @@ public class TunerConstants {
               DriveConstants.wheelBase.div(-2.0),
               DriveConstants.trackWidth.div(2.0),
               kInvertLeftSide,
-              kBackLeftSteerMotorInverted,
-              kBackLeftEncoderInverted);
+              DriveConstants.turnInverted,
+              DriveConstants.turnEncoderInverted);
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackRight =
@@ -198,8 +182,8 @@ public class TunerConstants {
               DriveConstants.wheelBase.div(-2.0),
               DriveConstants.trackWidth.div(-2.0),
               kInvertRightSide,
-              kBackRightSteerMotorInverted,
-              kBackRightEncoderInverted);
+              DriveConstants.turnInverted,
+              DriveConstants.turnEncoderInverted);
 
   /**
    * Creates a CommandSwerveDrivetrain instance. This should only be called once in your robot

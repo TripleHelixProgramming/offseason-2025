@@ -26,8 +26,8 @@ public class GyroIOBoron implements GyroIO {
 
   public GyroIOBoron() {
     canandgyro = new Canandgyro(DriveConstants.gyroCanId);
-    yawTimestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
-    yawPositionQueue = SparkOdometryThread.getInstance().registerSignal(canandgyro::getYaw);
+    yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
+    yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(canandgyro::getYaw);
   }
 
   // Check if gyro is calibrated

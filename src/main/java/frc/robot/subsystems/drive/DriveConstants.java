@@ -45,7 +45,6 @@ public class DriveConstants {
           maxChassisAngularVelocity.in(RadiansPerSecond),
           maxChassisAngularAcceleration.in(RadiansPerSecondPerSecond));
 
-  public static final double odometryFrequency = 100.0; // Hz
   public static final Distance wheelBase = Inches.of(27);
   public static final Distance trackWidth = Inches.of(21);
   public static final Distance driveBaseRadius =
@@ -86,24 +85,14 @@ public class DriveConstants {
   public static final Distance wheelRadius = Inches.of(2);
   public static final double driveMotorReduction = 6.75; // SDS MK4 L2
   public static final DCMotor driveGearbox = DCMotor.getKrakenX60(1);
-
-  // Drive encoder configuration
-  public static final double driveEncoderPositionFactor =
-      2 * Math.PI / driveMotorReduction; // Rotor Rotations -> Wheel Radians
-  public static final LinearVelocity maxWheelSpeed =
+  public static final LinearVelocity maxDriveSpeed =
       MetersPerSecond.of(
           0.9
               * wheelRadius.in(Meters)
+              * 2.0
+              * Math.PI
               * NEOVortexConstants.kFreeSpeed.in(RotationsPerSecond)
               / driveMotorReduction);
-  public static final double driveEncoderVelocityFactor =
-      (2 * Math.PI) / 60.0 / driveMotorReduction; // Rotor RPM -> Wheel Rad/Sec
-
-  // Drive PID configuration
-  public static final double driveKp = 0.0;
-  public static final double driveKd = 0.0;
-  public static final double driveKs = 0.0;
-  public static final double driveKv = 0.1;
 
   // Turn motor configuration
   public static final boolean turnInverted = false;
@@ -112,18 +101,6 @@ public class DriveConstants {
 
   // Absolute turn encoder configuration
   public static final boolean turnEncoderInverted = false;
-
-  // Relative turn encoder configuration
-  public static final double turnEncoderPositionFactor =
-      (2 * Math.PI) / turnMotorReduction; // Rotations -> Radians
-  public static final double turnEncoderVelocityFactor =
-      (2 * Math.PI) / 60.0 / turnMotorReduction; // RPM -> Rad/Sec
-
-  // Turn PID configuration
-  public static final double turnKp = 2.0;
-  public static final double turnKd = 0.0;
-  public static final double turnPIDMinInput = 0; // Radians
-  public static final double turnPIDMaxInput = 2 * Math.PI; // Radians
 
   // PathPlanner configuration
   public static final Mass robotMass = Pounds.of(150);
@@ -135,7 +112,7 @@ public class DriveConstants {
           robotMOI.in(KilogramSquareMeters),
           new ModuleConfig(
               wheelRadius.in(Meters),
-              maxWheelSpeed.in(MetersPerSecond),
+              maxDriveSpeed.in(MetersPerSecond),
               wheelCOF,
               driveGearbox.withReduction(driveMotorReduction),
               NEOVortexConstants.kDefaultCurrentLimit,
