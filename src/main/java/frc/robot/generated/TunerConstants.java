@@ -133,9 +133,6 @@ public class TunerConstants {
               .withDriveFrictionVoltage(kDriveFrictionVoltage);
 
   // Front Left
-  private static final int kFrontLeftDriveMotorId = 3;
-  private static final int kFrontLeftSteerMotorId = 2;
-  private static final int kFrontLeftEncoderId = 1;
   private static final Angle kFrontLeftEncoderOffset = Rotations.of(0.15234375);
   private static final boolean kFrontLeftSteerMotorInverted = true;
   private static final boolean kFrontLeftEncoderInverted = false;
@@ -144,9 +141,6 @@ public class TunerConstants {
   private static final Distance kFrontLeftYPos = Inches.of(10);
 
   // Front Right
-  private static final int kFrontRightDriveMotorId = 1;
-  private static final int kFrontRightSteerMotorId = 0;
-  private static final int kFrontRightEncoderId = 0;
   private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.4873046875);
   private static final boolean kFrontRightSteerMotorInverted = true;
   private static final boolean kFrontRightEncoderInverted = false;
@@ -155,9 +149,6 @@ public class TunerConstants {
   private static final Distance kFrontRightYPos = Inches.of(-10);
 
   // Back Left
-  private static final int kBackLeftDriveMotorId = 7;
-  private static final int kBackLeftSteerMotorId = 6;
-  private static final int kBackLeftEncoderId = 3;
   private static final Angle kBackLeftEncoderOffset = Rotations.of(-0.219482421875);
   private static final boolean kBackLeftSteerMotorInverted = true;
   private static final boolean kBackLeftEncoderInverted = false;
@@ -166,9 +157,6 @@ public class TunerConstants {
   private static final Distance kBackLeftYPos = Inches.of(10);
 
   // Back Right
-  private static final int kBackRightDriveMotorId = 5;
-  private static final int kBackRightSteerMotorId = 4;
-  private static final int kBackRightEncoderId = 2;
   private static final Angle kBackRightEncoderOffset = Rotations.of(0.17236328125);
   private static final boolean kBackRightSteerMotorInverted = true;
   private static final boolean kBackRightEncoderInverted = false;
@@ -180,9 +168,9 @@ public class TunerConstants {
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       FrontLeft =
           ConstantCreator.createModuleConstants(
-              kFrontLeftSteerMotorId,
-              kFrontLeftDriveMotorId,
-              kFrontLeftEncoderId,
+              DriveConstants.frontLeftTurnCanId,
+              DriveConstants.frontLeftDriveCanId,
+              DriveConstants.frontLeftTurnAbsoluteEncoderCanId,
               kFrontLeftEncoderOffset,
               kFrontLeftXPos,
               kFrontLeftYPos,
@@ -193,9 +181,9 @@ public class TunerConstants {
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       FrontRight =
           ConstantCreator.createModuleConstants(
-              kFrontRightSteerMotorId,
-              kFrontRightDriveMotorId,
-              kFrontRightEncoderId,
+              DriveConstants.frontRightTurnCanId,
+              DriveConstants.frontRightDriveCanId,
+              DriveConstants.frontRightTurnAbsoluteEncoderCanId,
               kFrontRightEncoderOffset,
               kFrontRightXPos,
               kFrontRightYPos,
@@ -206,9 +194,9 @@ public class TunerConstants {
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackLeft =
           ConstantCreator.createModuleConstants(
-              kBackLeftSteerMotorId,
-              kBackLeftDriveMotorId,
-              kBackLeftEncoderId,
+              DriveConstants.backLeftTurnCanId,
+              DriveConstants.backLeftDriveCanId,
+              DriveConstants.backLeftTurnAbsoluteEncoderCanId,
               kBackLeftEncoderOffset,
               kBackLeftXPos,
               kBackLeftYPos,
@@ -219,9 +207,9 @@ public class TunerConstants {
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
       BackRight =
           ConstantCreator.createModuleConstants(
-              kBackRightSteerMotorId,
-              kBackRightDriveMotorId,
-              kBackRightEncoderId,
+              DriveConstants.backRightTurnCanId,
+              DriveConstants.backRightDriveCanId,
+              DriveConstants.backRightTurnAbsoluteEncoderCanId,
               kBackRightEncoderOffset,
               kBackRightXPos,
               kBackRightYPos,
