@@ -22,8 +22,8 @@ import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.PathCommands;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOBoron;
 import frc.robot.subsystems.drive.ModuleIO;
@@ -85,10 +85,10 @@ public class Robot extends LoggedRobot {
         drive =
             new Drive(
                 new GyroIOBoron(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
+                new ModuleIOTalonFX(DriveConstants.FrontLeft),
+                new ModuleIOTalonFX(DriveConstants.FrontRight),
+                new ModuleIOTalonFX(DriveConstants.BackLeft),
+                new ModuleIOTalonFX(DriveConstants.BackRight));
         vision = new Vision(drive);
         break;
 
@@ -100,10 +100,10 @@ public class Robot extends LoggedRobot {
         drive =
             new Drive(
                 new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
+                new ModuleIOSim(DriveConstants.FrontLeft),
+                new ModuleIOSim(DriveConstants.FrontRight),
+                new ModuleIOSim(DriveConstants.BackLeft),
+                new ModuleIOSim(DriveConstants.BackRight));
         break;
 
       case REPLAY: // Replaying a log
