@@ -133,36 +133,20 @@ public class TunerConstants {
               .withDriveFrictionVoltage(kDriveFrictionVoltage);
 
   // Front Left
-  private static final Angle kFrontLeftEncoderOffset = Rotations.of(0.15234375);
   private static final boolean kFrontLeftSteerMotorInverted = true;
   private static final boolean kFrontLeftEncoderInverted = false;
 
-  private static final Distance kFrontLeftXPos = Inches.of(10);
-  private static final Distance kFrontLeftYPos = Inches.of(10);
-
   // Front Right
-  private static final Angle kFrontRightEncoderOffset = Rotations.of(-0.4873046875);
   private static final boolean kFrontRightSteerMotorInverted = true;
   private static final boolean kFrontRightEncoderInverted = false;
 
-  private static final Distance kFrontRightXPos = Inches.of(10);
-  private static final Distance kFrontRightYPos = Inches.of(-10);
-
   // Back Left
-  private static final Angle kBackLeftEncoderOffset = Rotations.of(-0.219482421875);
   private static final boolean kBackLeftSteerMotorInverted = true;
   private static final boolean kBackLeftEncoderInverted = false;
 
-  private static final Distance kBackLeftXPos = Inches.of(-10);
-  private static final Distance kBackLeftYPos = Inches.of(10);
-
   // Back Right
-  private static final Angle kBackRightEncoderOffset = Rotations.of(0.17236328125);
   private static final boolean kBackRightSteerMotorInverted = true;
   private static final boolean kBackRightEncoderInverted = false;
-
-  private static final Distance kBackRightXPos = Inches.of(-10);
-  private static final Distance kBackRightYPos = Inches.of(-10);
 
   public static final SwerveModuleConstants<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
@@ -171,9 +155,9 @@ public class TunerConstants {
               DriveConstants.frontLeftTurnCanId,
               DriveConstants.frontLeftDriveCanId,
               DriveConstants.frontLeftTurnAbsoluteEncoderCanId,
-              kFrontLeftEncoderOffset,
-              kFrontLeftXPos,
-              kFrontLeftYPos,
+              DriveConstants.frontLeftZeroRotation.getMeasure(),
+              DriveConstants.wheelBase.div(2.0),
+              DriveConstants.trackWidth.div(2.0),
               kInvertLeftSide,
               kFrontLeftSteerMotorInverted,
               kFrontLeftEncoderInverted);
@@ -184,9 +168,9 @@ public class TunerConstants {
               DriveConstants.frontRightTurnCanId,
               DriveConstants.frontRightDriveCanId,
               DriveConstants.frontRightTurnAbsoluteEncoderCanId,
-              kFrontRightEncoderOffset,
-              kFrontRightXPos,
-              kFrontRightYPos,
+              DriveConstants.frontRightZeroRotation.getMeasure(),
+              DriveConstants.wheelBase.div(2.0),
+              DriveConstants.trackWidth.div(-2.0),
               kInvertRightSide,
               kFrontRightSteerMotorInverted,
               kFrontRightEncoderInverted);
@@ -197,9 +181,9 @@ public class TunerConstants {
               DriveConstants.backLeftTurnCanId,
               DriveConstants.backLeftDriveCanId,
               DriveConstants.backLeftTurnAbsoluteEncoderCanId,
-              kBackLeftEncoderOffset,
-              kBackLeftXPos,
-              kBackLeftYPos,
+              DriveConstants.backLeftZeroRotation.getMeasure(),
+              DriveConstants.wheelBase.div(-2.0),
+              DriveConstants.trackWidth.div(2.0),
               kInvertLeftSide,
               kBackLeftSteerMotorInverted,
               kBackLeftEncoderInverted);
@@ -210,9 +194,9 @@ public class TunerConstants {
               DriveConstants.backRightTurnCanId,
               DriveConstants.backRightDriveCanId,
               DriveConstants.backRightTurnAbsoluteEncoderCanId,
-              kBackRightEncoderOffset,
-              kBackRightXPos,
-              kBackRightYPos,
+              DriveConstants.backRightZeroRotation.getMeasure(),
+              DriveConstants.wheelBase.div(-2.0),
+              DriveConstants.trackWidth.div(-2.0),
               kInvertRightSide,
               kBackRightSteerMotorInverted,
               kBackRightEncoderInverted);

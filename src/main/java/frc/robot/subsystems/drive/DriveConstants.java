@@ -21,7 +21,6 @@ import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.AngularAcceleration;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Distance;
@@ -47,16 +46,16 @@ public class DriveConstants {
           maxChassisAngularAcceleration.in(RadiansPerSecondPerSecond));
 
   public static final double odometryFrequency = 100.0; // Hz
-  private static final double wheelBase = Units.inchesToMeters(27);
-  private static final double trackWidth = Units.inchesToMeters(21);
+  public static final Distance wheelBase = Inches.of(27);
+  public static final Distance trackWidth = Inches.of(21);
   public static final Distance driveBaseRadius =
-      Meters.of(Math.hypot(trackWidth / 2.0, wheelBase / 2.0));
+      Meters.of(Translation2d.kZero.getDistance(new Translation2d(trackWidth, wheelBase)) / 2.0);
   public static final Translation2d[] moduleTranslations =
       new Translation2d[] {
-        new Translation2d(wheelBase / 2.0, trackWidth / 2.0),
-        new Translation2d(wheelBase / 2.0, -trackWidth / 2.0),
-        new Translation2d(-wheelBase / 2.0, trackWidth / 2.0),
-        new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0)
+        new Translation2d(wheelBase.div(2.0), trackWidth.div(2.0)),
+        new Translation2d(wheelBase.div(2.0), trackWidth.div(-2.0)),
+        new Translation2d(wheelBase.div(-2.0), trackWidth.div(2.0)),
+        new Translation2d(wheelBase.div(-2.0), trackWidth.div(-2.0))
       };
 
   // Zeroed rotation values for each module, see setup instructions
@@ -86,7 +85,7 @@ public class DriveConstants {
   // Drive motor configuration
   public static final Distance wheelRadius = Inches.of(2);
   public static final double driveMotorReduction = 6.75; // SDS MK4 L2
-  public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
+  public static final DCMotor driveGearbox = DCMotor.getKrakenX60(1);
 
   // Drive encoder configuration
   public static final double driveEncoderPositionFactor =
@@ -109,7 +108,7 @@ public class DriveConstants {
   // Turn motor configuration
   public static final boolean turnInverted = false;
   public static final double turnMotorReduction = 12.8; // SDS MK4
-  public static final DCMotor turnGearbox = DCMotor.getNEO(1);
+  public static final DCMotor turnGearbox = DCMotor.getKrakenX60(1);
 
   // Absolute turn encoder configuration
   public static final boolean turnEncoderInverted = false;
