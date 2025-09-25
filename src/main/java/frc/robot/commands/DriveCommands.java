@@ -26,8 +26,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -97,9 +95,6 @@ public class DriveCommands {
 
               // Convert to field relative speeds
               if (fieldRelativeSupplier.getAsBoolean()) {
-                // boolean isFlipped =
-                // DriverStation.getAlliance().isPresent()
-                // && DriverStation.getAlliance().get() == Alliance.Red;
                 speeds =
                     ChassisSpeeds.fromFieldRelativeSpeeds(
                         speeds,
@@ -121,7 +116,8 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      DoubleSupplier omegaSupplier) {
+      DoubleSupplier omegaSupplier,
+      BooleanSupplier fieldRotatedSupplier) {
     return Commands.run(
             () -> {
               // Get linear velocity
@@ -140,13 +136,12 @@ public class DriveCommands {
                       linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                       linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                       omega * drive.getMaxAngularSpeedRadPerSec());
-              boolean isFlipped =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get() == Alliance.Red;
               drive.runVelocity(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       speeds,
-                      isFlipped ? drive.getRotation().plus(Rotation2d.kPi) : drive.getRotation()));
+                      fieldRotatedSupplier.getAsBoolean()
+                          ? drive.getRotation().plus(Rotation2d.kPi)
+                          : drive.getRotation()));
             },
             drive)
         .withName("Field Relative Joystick Drive");
@@ -192,7 +187,8 @@ public class DriveCommands {
       Drive drive,
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
-      Supplier<Rotation2d> rotationSupplier) {
+      Supplier<Rotation2d> rotationSupplier,
+      BooleanSupplier fieldRotatedSupplier) {
 
     // Create PID controller
     ProfiledPIDController angleController =
@@ -221,13 +217,12 @@ public class DriveCommands {
                       linearVelocity.getX() * drive.getMaxLinearSpeedMetersPerSec(),
                       linearVelocity.getY() * drive.getMaxLinearSpeedMetersPerSec(),
                       omega);
-              boolean isFlipped =
-                  DriverStation.getAlliance().isPresent()
-                      && DriverStation.getAlliance().get() == Alliance.Red;
               drive.runVelocity(
                   ChassisSpeeds.fromFieldRelativeSpeeds(
                       speeds,
-                      isFlipped ? drive.getRotation().plus(Rotation2d.kPi) : drive.getRotation()));
+                      fieldRotatedSupplier.getAsBoolean()
+                          ? drive.getRotation().plus(Rotation2d.kPi)
+                          : drive.getRotation()));
             },
             drive)
         .withName("Fixed Orientation Joystick Drive")
