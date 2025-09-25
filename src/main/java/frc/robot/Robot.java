@@ -253,7 +253,8 @@ public class Robot extends LoggedRobot {
             () -> -zorroDriver.getRightYAxis(),
             () -> -zorroDriver.getRightXAxis(),
             () -> -zorroDriver.getLeftXAxis(),
-            () -> zorroDriver.getHID().getEUp()));
+            () -> zorroDriver.getHID().getEUp(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when button G is pressed
     zorroDriver
@@ -284,7 +285,8 @@ public class Robot extends LoggedRobot {
             () -> -xboxDriver.getLeftY(),
             () -> -xboxDriver.getLeftX(),
             () -> -xboxDriver.getRightX(),
-            () -> !xboxDriver.getHID().getLeftBumperButton()));
+            () -> !xboxDriver.getHID().getLeftBumperButton(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when B button is pressed
     xboxDriver

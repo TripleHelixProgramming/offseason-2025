@@ -75,7 +75,8 @@ public class DriveCommands {
       DoubleSupplier xSupplier,
       DoubleSupplier ySupplier,
       DoubleSupplier omegaSupplier,
-      BooleanSupplier fieldRelativeSupplier) {
+      BooleanSupplier fieldRelativeSupplier,
+      BooleanSupplier fieldRotatedSupplier) {
     return Commands.run(
             () -> {
               // Get linear velocity
@@ -96,13 +97,15 @@ public class DriveCommands {
 
               // Convert to field relative speeds
               if (fieldRelativeSupplier.getAsBoolean()) {
-                boolean isFlipped =
-                    DriverStation.getAlliance().isPresent()
-                        && DriverStation.getAlliance().get() == Alliance.Red;
+                // boolean isFlipped =
+                // DriverStation.getAlliance().isPresent()
+                // && DriverStation.getAlliance().get() == Alliance.Red;
                 speeds =
                     ChassisSpeeds.fromFieldRelativeSpeeds(
                         speeds,
-                        isFlipped ? drive.getRotation().plus(Rotation2d.kPi) : drive.getRotation());
+                        fieldRotatedSupplier.getAsBoolean()
+                            ? drive.getRotation().plus(Rotation2d.kPi)
+                            : drive.getRotation());
               }
 
               drive.runVelocity(speeds);
