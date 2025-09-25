@@ -151,6 +151,7 @@ public class Robot extends LoggedRobot {
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
     SmartDashboard.putData(CommandScheduler.getInstance());
+    SmartDashboard.putData(drive);
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
@@ -178,7 +179,7 @@ public class Robot extends LoggedRobot {
   /** This function is called once when autonomous mode is enabled. */
   @Override
   public void autonomousInit() {
-    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive));
+    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive).withName("Stop"));
     autoSelector.scheduleAuto();
   }
 
