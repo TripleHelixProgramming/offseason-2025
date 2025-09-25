@@ -173,7 +173,7 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
     autoSelector.disabledPeriodic();
-    ControllerSelector.getInstance().scan();
+    ControllerSelector.getInstance().scan(false);
   }
 
   /** This function is called once when autonomous mode is enabled. */
@@ -191,6 +191,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     autoSelector.cancelAuto();
+    ControllerSelector.getInstance().scan(true);
   }
 
   /** This function is called periodically during operator control. */
