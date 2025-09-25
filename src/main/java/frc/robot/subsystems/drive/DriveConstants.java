@@ -110,7 +110,8 @@ public class DriveConstants {
 
   // Drive motor configuration
   public static final Distance wheelRadius = Inches.of(2);
-  public static final double driveMotorReduction = 6.75; // SDS MK4 L2
+  public static final double driveMotorReduction =
+      (50.0 / 14.0) * (17.0 / 27.0) * (45.0 / 15.0); // SDS MK4 L2
   public static final DCMotor driveGearbox = DCMotor.getKrakenX60(1);
   public static final LinearVelocity maxDriveSpeed =
       MetersPerSecond.of(
@@ -121,7 +122,9 @@ public class DriveConstants {
 
   // Turn motor configuration
   public static final boolean turnInverted = false;
-  public static final double turnMotorReduction = 12.8; // SDS MK4
+  public static final double turnMotorReduction = (32.0 / 15.0) * (60.0 / 10.0); // SDS MK4
+  // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
+  private static final double kCoupleRatio = (50.0 / 14.0); // SDS MK4 L2
   public static final DCMotor turnGearbox = DCMotor.getKrakenX60(1);
 
   // Absolute turn encoder configuration
@@ -201,10 +204,6 @@ public class DriveConstants {
   // CAN bus that the devices are located on;
   // All swerve devices must share the same CAN bus
   public static final CANBus kCANBus = new CANBus("canivore", "./logs/example.hoot");
-
-  // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
-  // TODO: Update to match SDS MK4 L2 swerve module
-  private static final double kCoupleRatio = 3.8181818181818183;
 
   private static final boolean kInvertLeftSide = false;
   private static final boolean kInvertRightSide = true;
