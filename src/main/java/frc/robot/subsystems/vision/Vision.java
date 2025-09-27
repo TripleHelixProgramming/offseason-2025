@@ -7,6 +7,8 @@
 
 package frc.robot.subsystems.vision;
 
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
@@ -94,13 +96,18 @@ public class Vision extends SubsystemBase {
       for (var observation : inputs[cameraIndex].poseObservations) {
         // Check whether to reject pose
         boolean rejectPose =
-            observation.tagCount() == 0 // Must have at least one tag
-                || (observation.tagCount() == 1
-                    && observation.ambiguity() > maxAmbiguity) // Cannot be high ambiguity
-                || Math.abs(observation.pose().getZ())
-                    > maxZError // Must have realistic Z coordinate
+            // Must have observed at least one tag
+            observation.tagCount() == 0
 
-                // Must be within the field boundaries
+                // Any single-tag observation must have low ambiguity
+                || (observation.tagCount() == 1 && observation.ambiguity() > maxAmbiguity)
+
+                // Pose must be flat on the floor
+                || Math.abs(observation.pose().getZ()) > maxZError.in(Meters)
+                || Math.abs(observation.pose().getRotation().getX()) > maxRollError.in(Radians)
+                || Math.abs(observation.pose().getRotation().getY()) > maxPitchError.in(Radians)
+
+                // Pose must be within the field boundaries
                 || observation.pose().getX() < 0.0
                 || observation.pose().getX() > getTagLayout().getFieldLength()
                 || observation.pose().getY() < 0.0
