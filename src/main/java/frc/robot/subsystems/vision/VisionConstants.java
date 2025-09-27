@@ -16,6 +16,8 @@ import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Filesystem;
+import frc.robot.Robot;
+import frc.robot.subsystems.drive.DriveConstants;
 import java.io.IOException;
 
 public class VisionConstants {
@@ -62,6 +64,8 @@ public class VisionConstants {
   public static Distance maxZError = Meters.of(0.75);
   public static Angle maxRollError = Degrees.of(30);
   public static Angle maxPitchError = Degrees.of(30);
+  public static Distance maxTravelDistance =
+      DriveConstants.maxWheelSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)

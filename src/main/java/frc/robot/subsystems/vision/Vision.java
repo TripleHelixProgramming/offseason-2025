@@ -24,16 +24,19 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
   private final VisionConsumer consumer;
+  private final Supplier<Pose2d> poseSupplier;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
-  public Vision(VisionConsumer consumer, VisionIO... io) {
+  public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.consumer = consumer;
+    this.poseSupplier = poseSupplier;
     this.io = io;
 
     // Initialize inputs
@@ -111,7 +114,15 @@ public class Vision extends SubsystemBase {
                 || observation.pose().getX() < 0.0
                 || observation.pose().getX() > getTagLayout().getFieldLength()
                 || observation.pose().getY() < 0.0
-                || observation.pose().getY() > getTagLayout().getFieldWidth();
+                || observation.pose().getY() > getTagLayout().getFieldWidth()
+
+                // Pose must be within the max distance
+                || observation
+                        .pose()
+                        .toPose2d()
+                        .getTranslation()
+                        .getDistance(poseSupplier.get().getTranslation())
+                    > maxTravelDistance.in(Meters);
 
         // Add pose to log
         robotPoses.add(observation.pose());
