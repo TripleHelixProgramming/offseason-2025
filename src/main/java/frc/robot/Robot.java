@@ -1,6 +1,7 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Meters;
+import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -28,9 +29,10 @@ import frc.robot.subsystems.drive.GyroIOBoron;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
-import frc.robot.vision.Camera;
-import frc.robot.vision.Vision;
-import java.util.Arrays;
+import frc.robot.subsystems.vision.Vision;
+import frc.robot.subsystems.vision.VisionIO;
+import frc.robot.subsystems.vision.VisionIOPhotonVision;
+import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -90,7 +92,13 @@ public class Robot extends LoggedRobot {
                 new ModuleIOSpark(1),
                 new ModuleIOSpark(2),
                 new ModuleIOSpark(3));
-        vision = new Vision(drive);
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVision(cameraFrontRightName, robotToFrontRightCamera),
+                new VisionIOPhotonVision(cameraFrontLeftName, robotToFrontLeftCamera),
+                new VisionIOPhotonVision(cameraBackRightName, robotToBackRightCamera),
+                new VisionIOPhotonVision(cameraBackLeftName, robotToBackLeftCamera));
         break;
 
       case SIM: // Running a physics simulator
@@ -105,6 +113,17 @@ public class Robot extends LoggedRobot {
                 new ModuleIOSim(),
                 new ModuleIOSim(),
                 new ModuleIOSim());
+        vision =
+            new Vision(
+                drive::addVisionMeasurement,
+                new VisionIOPhotonVisionSim(
+                    cameraFrontRightName, robotToFrontRightCamera, drive::getPose),
+                new VisionIOPhotonVisionSim(
+                    cameraFrontLeftName, robotToFrontLeftCamera, drive::getPose),
+                new VisionIOPhotonVisionSim(
+                    cameraBackRightName, robotToBackRightCamera, drive::getPose),
+                new VisionIOPhotonVisionSim(
+                    cameraBackLeftName, robotToBackLeftCamera, drive::getPose));
         break;
 
       case REPLAY: // Replaying a log
@@ -123,6 +142,7 @@ public class Robot extends LoggedRobot {
                 new ModuleIO() {},
                 new ModuleIO() {},
                 new ModuleIO() {});
+        vision = new Vision(drive::addVisionMeasurement, new VisionIO() {}, new VisionIO() {});
         break;
     }
 
@@ -152,12 +172,6 @@ public class Robot extends LoggedRobot {
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
-
-    Logger.recordOutput("Vision/Estimate", vision.getPose().orElse(Pose2d.kZero));
-    Arrays.stream(Camera.values())
-        .forEach(
-            cam ->
-                Logger.recordOutput("Vision/" + cam.getName(), cam.getPose().orElse(Pose2d.kZero)));
   }
 
   /** This function is called once when the robot is disabled. */
