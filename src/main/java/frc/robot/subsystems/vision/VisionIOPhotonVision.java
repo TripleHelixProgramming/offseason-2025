@@ -7,8 +7,6 @@
 
 package frc.robot.subsystems.vision;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -84,7 +82,7 @@ public class VisionIOPhotonVision implements VisionIO {
         var target = result.targets.get(0);
 
         // Calculate robot pose
-        var tagPose = getTagLayout().getTagPose(target.fiducialId);
+        var tagPose = Vision.getAprilTagLayout().getTagPose(target.fiducialId);
         if (tagPose.isPresent()) {
           Transform3d fieldToTarget =
               new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());

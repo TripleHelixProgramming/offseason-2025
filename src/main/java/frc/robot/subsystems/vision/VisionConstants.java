@@ -9,7 +9,6 @@ package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.*;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -18,24 +17,12 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.DriveConstants;
-import java.io.IOException;
 
 public class VisionConstants {
 
-  private static String kStemGymAprilTagLayoutPath =
-      Filesystem.getDeployDirectory() + "/stemgym.json";
-
-  public static AprilTagFieldLayout getTagLayout() {
-    AprilTagFieldLayout tagLayout;
-    try {
-      tagLayout = new AprilTagFieldLayout(VisionConstants.kStemGymAprilTagLayoutPath);
-    } catch (IOException e) {
-      System.err.println("Error loading custom AprilTag layout: " + e.getMessage());
-      tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
-    }
-    // tagLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
-    return tagLayout;
-  }
+  public static String customAprilTagLayoutPath = Filesystem.getDeployDirectory() + "/stemgym.json";
+  public static Boolean useCustomAprilTagLayout = false;
+  public static AprilTagFields defauAprilTagFieldLayout = AprilTagFields.k2025ReefscapeAndyMark;
 
   // Camera names, must match names configured on coprocessor
   public static String cameraFrontRightName = "OV2311_TH_4";

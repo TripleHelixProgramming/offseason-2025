@@ -11,6 +11,7 @@ import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -20,9 +21,11 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -92,7 +95,7 @@ public class Vision extends SubsystemBase {
 
       // Add tag poses
       for (int tagId : inputs[cameraIndex].tagIds) {
-        var tagPose = getTagLayout().getTagPose(tagId);
+        var tagPose = getAprilTagLayout().getTagPose(tagId);
         if (tagPose.isPresent()) {
           tagPoses.add(tagPose.get());
         }
@@ -118,9 +121,9 @@ public class Vision extends SubsystemBase {
 
                 // Pose must be within the field boundaries
                 || observation.pose().getX() < 0.0
-                || observation.pose().getX() > getTagLayout().getFieldLength()
+                || observation.pose().getX() > getAprilTagLayout().getFieldLength()
                 || observation.pose().getY() < 0.0
-                || observation.pose().getY() > getTagLayout().getFieldWidth()
+                || observation.pose().getY() > getAprilTagLayout().getFieldWidth()
 
                 // Pose must be within the max possible travel distance
                 // TODO: Disable this filter during initial robot setup
@@ -217,4 +220,22 @@ public class Vision extends SubsystemBase {
 
   // Associate observations with their standard deviations
   public static record ObservationWithStdDev(PoseObservation observation, Matrix<N3, N1> stdDevs) {}
+
+  public static AprilTagFieldLayout getAprilTagLayout() {
+    AprilTagFieldLayout tagLayout;
+
+    // Load custom layout if specified and not connected to FMS
+    if (useCustomAprilTagLayout && !DriverStation.isFMSAttached()) {
+      try {
+        tagLayout = new AprilTagFieldLayout(customAprilTagLayoutPath);
+      } catch (IOException e) {
+        System.err.println("Error loading custom AprilTag layout: " + e.getMessage());
+        tagLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
+      }
+    } else {
+      tagLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
+    }
+
+    return tagLayout;
+  }
 }
