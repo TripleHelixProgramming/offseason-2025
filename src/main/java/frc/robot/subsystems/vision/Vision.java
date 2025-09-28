@@ -122,7 +122,8 @@ public class Vision extends SubsystemBase {
                 || observation.pose().getY() < 0.0
                 || observation.pose().getY() > getTagLayout().getFieldWidth()
 
-                // Pose must be within the max distance
+                // Pose must be within the max possible travel distance
+                // TODO: Disable this filter during initial robot setup
                 || observation
                         .pose()
                         .toPose2d()
