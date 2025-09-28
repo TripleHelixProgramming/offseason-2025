@@ -21,7 +21,10 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Supplier;
@@ -95,6 +98,9 @@ public class Vision extends SubsystemBase {
         }
       }
 
+      // List to store acceptable observations along with their calculated standard deviations
+      List<ObservationWithStdDev> acceptableObservations = new ArrayList<>();
+
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
         // Check whether to reject pose
@@ -151,11 +157,21 @@ public class Vision extends SubsystemBase {
           angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
 
-        // Send vision observation
+        // Pair the observation with its standard deviations and add it to the list
+        acceptableObservations.add(
+            new ObservationWithStdDev(
+                observation, VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev)));
+      }
+
+      // After processing all observations, sort the list by timestamp
+      acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
+
+      // Send sorted vision observations to the pose estimator
+      for (ObservationWithStdDev obsWithStdDev : acceptableObservations) {
         consumer.accept(
-            observation.pose().toPose2d(),
-            observation.timestamp(),
-            VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+            obsWithStdDev.observation.pose().toPose2d(),
+            obsWithStdDev.observation.timestamp(),
+            obsWithStdDev.stdDevs);
       }
 
       // Log camera datadata
@@ -197,4 +213,7 @@ public class Vision extends SubsystemBase {
         double timestampSeconds,
         Matrix<N3, N1> visionMeasurementStdDevs);
   }
+
+  // Associate observations with their standard deviations
+  public static record ObservationWithStdDev(PoseObservation observation, Matrix<N3, N1> stdDevs) {}
 }
