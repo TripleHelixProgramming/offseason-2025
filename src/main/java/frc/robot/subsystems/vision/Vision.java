@@ -7,8 +7,7 @@
 
 package frc.robot.subsystems.vision;
 
-import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.Radians;
+import static edu.wpi.first.units.Units.*;
 import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
@@ -82,6 +81,9 @@ public class Vision extends SubsystemBase {
     List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
     List<Pose3d> allRobotPosesRejected = new LinkedList<>();
 
+    // List to store acceptable observations along with their calculated standard deviations
+    List<ObservationWithStdDev> acceptableObservations = new ArrayList<>();
+
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
       // Update disconnected alert
@@ -100,9 +102,6 @@ public class Vision extends SubsystemBase {
           tagPoses.add(tagPose.get());
         }
       }
-
-      // List to store acceptable observations along with their calculated standard deviations
-      List<ObservationWithStdDev> acceptableObservations = new ArrayList<>();
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
@@ -167,17 +166,6 @@ public class Vision extends SubsystemBase {
                 observation, VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev)));
       }
 
-      // After processing all observations, sort the list by timestamp
-      acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
-
-      // Send sorted vision observations to the pose estimator
-      for (ObservationWithStdDev obsWithStdDev : acceptableObservations) {
-        consumer.accept(
-            obsWithStdDev.observation.pose().toPose2d(),
-            obsWithStdDev.observation.timestamp(),
-            obsWithStdDev.stdDevs);
-      }
-
       // Log camera datadata
       Logger.recordOutput(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
@@ -195,6 +183,17 @@ public class Vision extends SubsystemBase {
       allRobotPoses.addAll(robotPoses);
       allRobotPosesAccepted.addAll(robotPosesAccepted);
       allRobotPosesRejected.addAll(robotPosesRejected);
+    }
+
+    // Sort the list of acceptable observations by timestamp
+    acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
+
+    // Send sorted vision observations to the pose estimator
+    for (ObservationWithStdDev obsWithStdDev : acceptableObservations) {
+      consumer.accept(
+          obsWithStdDev.observation.pose().toPose2d(),
+          obsWithStdDev.observation.timestamp(),
+          obsWithStdDev.stdDevs);
     }
 
     // Log summary data
