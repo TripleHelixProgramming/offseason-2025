@@ -226,21 +226,24 @@ public class Vision extends SubsystemBase {
   // Associate observations with their standard deviations
   public static record ObservationWithStdDev(PoseObservation observation, Matrix<N3, N1> stdDevs) {}
 
+  public static AprilTagFieldLayout cachedLayout = null;
+
   public static AprilTagFieldLayout getAprilTagLayout() {
-    AprilTagFieldLayout tagLayout;
 
-    // Load custom layout if specified and not connected to FMS
-    if (useCustomAprilTagLayout && !DriverStation.isFMSAttached()) {
-      try {
-        tagLayout = new AprilTagFieldLayout(customAprilTagLayoutPath);
-      } catch (IOException e) {
-        System.err.println("Error loading custom AprilTag layout: " + e.getMessage());
-        tagLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
+    if (cachedLayout == null) {
+
+      // Load custom layout if specified and not connected to FMS
+      if (useCustomAprilTagLayout && !DriverStation.isFMSAttached()) {
+        try {
+          cachedLayout = new AprilTagFieldLayout(customAprilTagLayoutPath);
+        } catch (IOException e) {
+          System.err.println("Error loading custom AprilTag layout: " + e.getMessage());
+          cachedLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
+        }
+      } else {
+        cachedLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
       }
-    } else {
-      tagLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
     }
-
-    return tagLayout;
+    return cachedLayout;
   }
 }
