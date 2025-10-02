@@ -42,6 +42,7 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -347,5 +348,12 @@ public class Drive extends SubsystemBase {
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
     return maxChassisAngularVelocity.in(RadiansPerSecond);
+  }
+
+  public void zeroAbsoluteEncoders() {
+    for (int i = 0; i < 4; i++) {
+      Preferences.setDouble(
+          DriveConstants.zeroRotationKey + i, modules[i].getAngle().getRotations());
+    }
   }
 }

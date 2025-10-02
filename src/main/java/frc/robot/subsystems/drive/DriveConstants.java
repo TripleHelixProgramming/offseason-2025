@@ -36,7 +36,6 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.Matrix;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -50,6 +49,7 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.MotorConstants.KrakenX60Constants;
 
 public class DriveConstants {
@@ -83,12 +83,13 @@ public class DriveConstants {
           maxChassisAngularVelocity.in(RadiansPerSecond),
           maxChassisAngularAcceleration.in(RadiansPerSecondPerSecond));
 
+  public static final String zeroRotationKey = "ZeroRotation";
   // Zeroed rotation values for each module, see setup instructions
   // TODO: Update for new modules
-  public static final Rotation2d frontLeftZeroRotation = new Rotation2d(1.156);
-  public static final Rotation2d frontRightZeroRotation = new Rotation2d(4.396);
-  public static final Rotation2d backLeftZeroRotation = new Rotation2d(4.252);
-  public static final Rotation2d backRightZeroRotation = new Rotation2d(5.977);
+  public static final double frontLeftZeroRotationBackup = 1.156;
+  public static final double frontRightZeroRotationBackup = 4.396;
+  public static final double backLeftZeroRotationBackup = 4.252;
+  public static final double backRightZeroRotationBackup = 5.977;
 
   // Device CAN IDs
   public static final int gyroCanId = 0;
@@ -254,7 +255,7 @@ public class DriveConstants {
               frontLeftTurnCanId,
               frontLeftDriveCanId,
               frontLeftTurnAbsoluteEncoderCanId,
-              frontLeftZeroRotation.getMeasure(),
+              Radians.of(Preferences.getDouble(zeroRotationKey + 0, frontLeftZeroRotationBackup)),
               wheelBase.div(2.0),
               trackWidth.div(2.0),
               kInvertLeftSide,
@@ -267,7 +268,7 @@ public class DriveConstants {
               frontRightTurnCanId,
               frontRightDriveCanId,
               frontRightTurnAbsoluteEncoderCanId,
-              frontRightZeroRotation.getMeasure(),
+              Radians.of(Preferences.getDouble(zeroRotationKey + 0, frontRightZeroRotationBackup)),
               wheelBase.div(2.0),
               trackWidth.div(-2.0),
               kInvertRightSide,
@@ -280,7 +281,7 @@ public class DriveConstants {
               backLeftTurnCanId,
               backLeftDriveCanId,
               backLeftTurnAbsoluteEncoderCanId,
-              backLeftZeroRotation.getMeasure(),
+              Radians.of(Preferences.getDouble(zeroRotationKey + 0, backLeftZeroRotationBackup)),
               wheelBase.div(-2.0),
               trackWidth.div(2.0),
               kInvertLeftSide,
@@ -293,7 +294,7 @@ public class DriveConstants {
               backRightTurnCanId,
               backRightDriveCanId,
               backRightTurnAbsoluteEncoderCanId,
-              backRightZeroRotation.getMeasure(),
+              Radians.of(Preferences.getDouble(zeroRotationKey + 0, backRightZeroRotationBackup)),
               wheelBase.div(-2.0),
               trackWidth.div(-2.0),
               kInvertRightSide,

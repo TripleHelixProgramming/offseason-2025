@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
@@ -57,6 +58,11 @@ public class Robot extends LoggedRobot {
   private Vision vision;
 
   public Robot() {
+
+    SmartDashboard.putData(
+        "Align Encoders",
+        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
+
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
     Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
