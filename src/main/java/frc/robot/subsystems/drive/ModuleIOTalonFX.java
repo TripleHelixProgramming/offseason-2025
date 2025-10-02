@@ -261,4 +261,11 @@ public class ModuleIOTalonFX implements ModuleIO {
               rotation.getRotations());
         });
   }
+
+  @Override
+  public void resetTurnZero(Rotation2d rotation) {
+    CANcoderConfiguration config = new CANcoderConfiguration();
+    config.MagnetSensor.MagnetOffset = rotation.getRadians();
+    cancoder.getConfigurator().apply(config);
+  }
 }

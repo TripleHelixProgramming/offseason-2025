@@ -42,7 +42,6 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -351,9 +350,8 @@ public class Drive extends SubsystemBase {
   }
 
   public void zeroAbsoluteEncoders() {
-    for (int i = 0; i < 4; i++) {
-      Preferences.setDouble(
-          DriveConstants.zeroRotationKey + i, modules[i].getAngle().getRotations());
+    for (var module : modules) {
+      module.resetTurnZero();
     }
   }
 }

@@ -58,11 +58,6 @@ public class Robot extends LoggedRobot {
   private Vision vision;
 
   public Robot() {
-
-    SmartDashboard.putData(
-        "Align Encoders",
-        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
-
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
     Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -141,6 +136,10 @@ public class Robot extends LoggedRobot {
 
     configureControlPanelBindings();
     configureAutoOptions();
+
+    SmartDashboard.putData(
+        "Align Encoders",
+        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
   }
 
   /** This function is called periodically during all modes. */
