@@ -232,8 +232,8 @@ public class Vision extends SubsystemBase {
 
     if (cachedLayout == null) {
 
-      // Load custom layout if specified and not connected to FMS
-      if (useCustomAprilTagLayout && !DriverStation.isFMSAttached()) {
+      // Do not Load custom layout if not specified or if connected to FMS
+      if (!useCustomAprilTagLayout || DriverStation.isFMSAttached()) {
         try {
           cachedLayout = new AprilTagFieldLayout(customAprilTagLayoutPath);
         } catch (IOException e) {
