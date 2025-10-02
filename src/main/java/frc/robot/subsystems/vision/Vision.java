@@ -27,8 +27,6 @@ import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -76,13 +74,13 @@ public class Vision extends SubsystemBase {
     }
 
     // Initialize logging values
-    List<Pose3d> allTagPoses = new LinkedList<>();
-    List<Pose3d> allRobotPoses = new LinkedList<>();
-    List<Pose3d> allRobotPosesAccepted = new LinkedList<>();
-    List<Pose3d> allRobotPosesRejected = new LinkedList<>();
+    var allTagPoses = new ArrayList<Pose3d>();
+    var allRobotPoses = new ArrayList<Pose3d>();
+    var allRobotPosesAccepted = new ArrayList<Pose3d>();
+    var allRobotPosesRejected = new ArrayList<Pose3d>();
 
     // List to store acceptable observations along with their calculated standard deviations
-    List<ObservationWithStdDev> acceptableObservations = new ArrayList<>();
+    var acceptableObservations = new ArrayList<ObservationWithStdDev>();
 
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -90,10 +88,10 @@ public class Vision extends SubsystemBase {
       disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
 
       // Initialize logging values
-      List<Pose3d> tagPoses = new LinkedList<>();
-      List<Pose3d> robotPoses = new LinkedList<>();
-      List<Pose3d> robotPosesAccepted = new LinkedList<>();
-      List<Pose3d> robotPosesRejected = new LinkedList<>();
+      var tagPoses = new ArrayList<Pose3d>();
+      var robotPoses = new ArrayList<Pose3d>();
+      var robotPosesAccepted = new ArrayList<Pose3d>();
+      var robotPosesRejected = new ArrayList<Pose3d>();
 
       // Add tag poses
       for (int tagId : inputs[cameraIndex].tagIds) {
@@ -149,7 +147,8 @@ public class Vision extends SubsystemBase {
 
         // Calculate standard deviations
         double stdDevFactor =
-            Math.pow(observation.averageTagDistance(), 2.0) / observation.tagCount();
+            (observation.averageTagDistance() * observation.averageTagDistance())
+                / observation.tagCount();
         double linearStdDev = linearStdDevBaseline * stdDevFactor;
         double angularStdDev = angularStdDevBaseline * stdDevFactor;
         if (observation.type() == PoseObservationType.MEGATAG_2) {
@@ -203,16 +202,12 @@ public class Vision extends SubsystemBase {
     }
 
     // Log summary data
+    Logger.recordOutput("Vision/Summary/TagPoses", allTagPoses.toArray(Pose3d[]::new));
+    Logger.recordOutput("Vision/Summary/RobotPoses", allRobotPoses.toArray(Pose3d[]::new));
     Logger.recordOutput(
-        "Vision/Summary/TagPoses", allTagPoses.toArray(new Pose3d[allTagPoses.size()]));
+        "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(Pose3d[]::new));
     Logger.recordOutput(
-        "Vision/Summary/RobotPoses", allRobotPoses.toArray(new Pose3d[allRobotPoses.size()]));
-    Logger.recordOutput(
-        "Vision/Summary/RobotPosesAccepted",
-        allRobotPosesAccepted.toArray(new Pose3d[allRobotPosesAccepted.size()]));
-    Logger.recordOutput(
-        "Vision/Summary/RobotPosesRejected",
-        allRobotPosesRejected.toArray(new Pose3d[allRobotPosesRejected.size()]));
+        "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
   }
 
   @FunctionalInterface
