@@ -21,7 +21,7 @@ import frc.robot.subsystems.drive.DriveConstants;
 public class VisionConstants {
 
   public static String customAprilTagLayoutPath = Filesystem.getDeployDirectory() + "/stemgym.json";
-  public static Boolean useCustomAprilTagLayout = false;
+  public static Boolean useCustomAprilTagLayout = true;
   public static AprilTagFields defauAprilTagFieldLayout = AprilTagFields.k2025ReefscapeAndyMark;
 
   // Camera names, must match names configured on coprocessor

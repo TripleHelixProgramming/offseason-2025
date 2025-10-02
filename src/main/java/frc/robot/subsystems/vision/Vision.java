@@ -161,10 +161,10 @@ public class Vision extends SubsystemBase {
           angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
 
-        consumer.accept(
-            observation.pose().toPose2d(),
-            observation.timestamp(),
-            VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+        // consumer.accept(
+        //     observation.pose().toPose2d(),
+        //     observation.timestamp(),
+        //     VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
 
         // Pair the observation with its standard deviations and add it to the list
         acceptableObservations.add(
@@ -196,10 +196,10 @@ public class Vision extends SubsystemBase {
 
     // Send sorted vision observations to the pose estimator
     for (ObservationWithStdDev obsWithStdDev : acceptableObservations) {
-      // consumer.accept(
-      //     obsWithStdDev.observation.pose().toPose2d(),
-      //     obsWithStdDev.observation.timestamp(),
-      //     obsWithStdDev.stdDevs);
+      consumer.accept(
+          obsWithStdDev.observation.pose().toPose2d(),
+          obsWithStdDev.observation.timestamp(),
+          obsWithStdDev.stdDevs);
     }
 
     // Log summary data
