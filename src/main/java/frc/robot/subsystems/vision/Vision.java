@@ -160,11 +160,6 @@ public class Vision extends SubsystemBase {
           angularStdDev *= cameraStdDevFactors[cameraIndex];
         }
 
-        // consumer.accept(
-        //     observation.pose().toPose2d(),
-        //     observation.timestamp(),
-        //     VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
-
         // Pair the observation with its standard deviations and add it to the list
         acceptableObservations.add(
             new ObservationWithStdDev(
