@@ -232,7 +232,7 @@ public class Vision extends SubsystemBase {
       }
       // Otherwise load default layout
       if (cachedLayout == null) {
-        cachedLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
+        cachedLayout = AprilTagFieldLayout.loadField(defaultAprilTagFieldLayout);
       }
     }
     return cachedLayout;
