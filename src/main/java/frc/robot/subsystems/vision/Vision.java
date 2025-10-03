@@ -221,21 +221,22 @@ public class Vision extends SubsystemBase {
   // Associate observations with their standard deviations
   public static record ObservationWithStdDev(PoseObservation observation, Matrix<N3, N1> stdDevs) {}
 
+  // Caching for AprilTag layout
   public static AprilTagFieldLayout cachedLayout = null;
 
+  /** Returns the AprilTag layout to use, loading it if necessary. */
   public static AprilTagFieldLayout getAprilTagLayout() {
-
     if (cachedLayout == null) {
-
-      // Do not Load custom layout if not specified or if connected to FMS
-      if (!useCustomAprilTagLayout || DriverStation.isFMSAttached()) {
+      // Try to load custom layout only if requested and not connected to FMS
+      if (useCustomAprilTagLayout && !DriverStation.isFMSAttached()) {
         try {
           cachedLayout = new AprilTagFieldLayout(customAprilTagLayoutPath);
         } catch (IOException e) {
           System.err.println("Error loading custom AprilTag layout: " + e.getMessage());
-          cachedLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
         }
-      } else {
+      }
+      // Otherwise load default layout
+      if (cachedLayout == null) {
         cachedLayout = AprilTagFieldLayout.loadField(defauAprilTagFieldLayout);
       }
     }
