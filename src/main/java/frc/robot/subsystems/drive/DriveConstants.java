@@ -18,7 +18,6 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.hardware.CANcoder;
@@ -49,7 +48,6 @@ import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.units.measure.Voltage;
-import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants.MotorConstants.KrakenX60Constants;
 
 public class DriveConstants {
@@ -84,12 +82,6 @@ public class DriveConstants {
           maxChassisAngularAcceleration.in(RadiansPerSecondPerSecond));
 
   public static final String zeroRotationKey = "ZeroRotation";
-  // Zeroed rotation values for each module, see setup instructions
-  // TODO: Update for new modules
-  public static final double frontLeftZeroRotationBackup = 1.156;
-  public static final double frontRightZeroRotationBackup = 4.396;
-  public static final double backLeftZeroRotationBackup = 4.252;
-  public static final double backRightZeroRotationBackup = 5.977;
 
   // Device CAN IDs
   public static final int gyroCanId = 0;
@@ -198,9 +190,6 @@ public class DriveConstants {
                   // stator current limit to help avoid brownouts without impacting performance.
                   .withStatorCurrentLimit(Amps.of(60))
                   .withStatorCurrentLimitEnable(true));
-  private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
-  // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
-  private static final Pigeon2Configuration pigeonConfigs = null;
 
   // CAN bus that the devices are located on;
   // All swerve devices must share the same CAN bus
@@ -218,9 +207,7 @@ public class DriveConstants {
 
   public static final SwerveDrivetrainConstants DrivetrainConstants =
       new SwerveDrivetrainConstants()
-          .withCANBusName(kCANBus.getName())
-          .withPigeon2Id(gyroCanId) // TODO: Determine if references to Pigeon can be deleted
-          .withPigeon2Configs(pigeonConfigs);
+          .withCANBusName(kCANBus.getName());
 
   private static final SwerveModuleConstantsFactory<
           TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>
@@ -242,7 +229,6 @@ public class DriveConstants {
               .withFeedbackSource(kSteerFeedbackType)
               .withDriveMotorInitialConfigs(driveInitialConfigs)
               .withSteerMotorInitialConfigs(steerInitialConfigs)
-              .withEncoderInitialConfigs(encoderInitialConfigs)
               .withSteerInertia(kSteerInertia)
               .withDriveInertia(kDriveInertia)
               .withSteerFrictionVoltage(kSteerFrictionVoltage)
@@ -255,7 +241,7 @@ public class DriveConstants {
               frontLeftTurnCanId,
               frontLeftDriveCanId,
               frontLeftTurnAbsoluteEncoderCanId,
-              Radians.of(Preferences.getDouble(zeroRotationKey + 0, frontLeftZeroRotationBackup)),
+              Rotations.of(0),
               wheelBase.div(2.0),
               trackWidth.div(2.0),
               kInvertLeftSide,
@@ -268,7 +254,7 @@ public class DriveConstants {
               frontRightTurnCanId,
               frontRightDriveCanId,
               frontRightTurnAbsoluteEncoderCanId,
-              Radians.of(Preferences.getDouble(zeroRotationKey + 0, frontRightZeroRotationBackup)),
+              Rotations.of(0),
               wheelBase.div(2.0),
               trackWidth.div(-2.0),
               kInvertRightSide,
@@ -281,7 +267,7 @@ public class DriveConstants {
               backLeftTurnCanId,
               backLeftDriveCanId,
               backLeftTurnAbsoluteEncoderCanId,
-              Radians.of(Preferences.getDouble(zeroRotationKey + 0, backLeftZeroRotationBackup)),
+              Rotations.of(0),
               wheelBase.div(-2.0),
               trackWidth.div(2.0),
               kInvertLeftSide,
@@ -294,7 +280,7 @@ public class DriveConstants {
               backRightTurnCanId,
               backRightDriveCanId,
               backRightTurnAbsoluteEncoderCanId,
-              Radians.of(Preferences.getDouble(zeroRotationKey + 0, backRightZeroRotationBackup)),
+              Rotations.of(0),
               wheelBase.div(-2.0),
               trackWidth.div(-2.0),
               kInvertRightSide,

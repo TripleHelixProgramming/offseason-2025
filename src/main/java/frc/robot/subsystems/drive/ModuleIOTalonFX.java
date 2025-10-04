@@ -52,6 +52,7 @@ public class ModuleIOTalonFX implements ModuleIO {
   private final TalonFX driveTalon;
   private final TalonFX turnTalon;
   private final CANcoder cancoder;
+  private final CANcoderConfiguration cancoderConfig = new CANcoderConfiguration();
 
   // Voltage control requests
   private final VoltageOut voltageRequest = new VoltageOut(0);
@@ -142,8 +143,9 @@ public class ModuleIOTalonFX implements ModuleIO {
     tryUntilOk(5, () -> turnTalon.getConfigurator().apply(turnConfig, 0.25));
 
     // Configure CANCoder
-    CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;
-    cancoderConfig.MagnetSensor.MagnetOffset = constants.EncoderOffset;
+    // CANcoderConfiguration cancoderConfig = constants.EncoderInitialConfigs;
+    // cancoderConfig.MagnetSensor.MagnetOffset = constants.EncoderOffset;
+    cancoder.getConfigurator().refresh(cancoderConfig);
     cancoderConfig.MagnetSensor.SensorDirection =
         constants.EncoderInverted
             ? SensorDirectionValue.Clockwise_Positive
@@ -204,6 +206,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     inputs.turnEncoderConnected = turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
     inputs.turnAbsolutePosition = Rotation2d.fromRotations(turnAbsolutePosition.getValueAsDouble());
     inputs.turnPosition = Rotation2d.fromRotations(turnPosition.getValueAsDouble());
+    inputs.turnZero = Rotation2d.fromRotations(cancoderConfig.MagnetSensor.MagnetOffset);
     inputs.turnVelocityRadPerSec = Units.rotationsToRadians(turnVelocity.getValueAsDouble());
     inputs.turnAppliedVolts = turnAppliedVolts.getValueAsDouble();
     inputs.turnCurrentAmps = turnCurrent.getValueAsDouble();
@@ -263,9 +266,8 @@ public class ModuleIOTalonFX implements ModuleIO {
   }
 
   @Override
-  public void resetTurnZero(Rotation2d rotation) {
-    CANcoderConfiguration config = new CANcoderConfiguration();
-    config.MagnetSensor.MagnetOffset = rotation.getRadians();
-    cancoder.getConfigurator().apply(config);
+  public void setTurnZero(Rotation2d rotation) {
+    cancoderConfig.MagnetSensor.MagnetOffset = rotation.getRotations();
+    cancoder.getConfigurator().apply(cancoderConfig);
   }
 }

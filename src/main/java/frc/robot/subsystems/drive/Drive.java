@@ -351,7 +351,7 @@ public class Drive extends SubsystemBase {
 
   public void zeroAbsoluteEncoders() {
     for (var module : modules) {
-      module.resetTurnZero();
+      module.setTurnZero();
     }
   }
 }

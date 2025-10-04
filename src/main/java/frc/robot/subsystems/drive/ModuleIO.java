@@ -29,6 +29,7 @@ public interface ModuleIO {
     public boolean turnEncoderConnected = false;
     public Rotation2d turnAbsolutePosition = Rotation2d.kZero;
     public Rotation2d turnPosition = Rotation2d.kZero;
+    public Rotation2d turnZero = Rotation2d.kZero;
     public double turnVelocityRadPerSec = 0.0;
     public double turnAppliedVolts = 0.0;
     public double turnCurrentAmps = 0.0;
@@ -53,5 +54,6 @@ public interface ModuleIO {
   /** Run the turn motor to the specified rotation. */
   public default void setTurnPosition(Rotation2d rotation) {}
 
-  public default void resetTurnZero(Rotation2d rotation) {}
+  /** Update the turn zero position of the turn absolute encoder */
+  public default void setTurnZero(Rotation2d rotation) {}
 }
