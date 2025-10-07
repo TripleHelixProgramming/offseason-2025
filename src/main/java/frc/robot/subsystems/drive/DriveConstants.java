@@ -86,20 +86,20 @@ public class DriveConstants {
   // Device CAN IDs
   public static final int gyroCanId = 0;
 
-  public static final int frontLeftDriveCanId = 28;
   public static final int backLeftDriveCanId = 10;
+  public static final int backRightDriveCanId = 18;
   public static final int frontRightDriveCanId = 20;
-  public static final int backRightDriveCanId = 12;
+  public static final int frontLeftDriveCanId = 28;
 
-  public static final int frontLeftTurnCanId = 29;
   public static final int backLeftTurnCanId = 11;
+  public static final int backRightTurnCanId = 19;
   public static final int frontRightTurnCanId = 21;
-  public static final int backRightTurnCanId = 13;
+  public static final int frontLeftTurnCanId = 29;
 
+  public static final int backRightTurnAbsoluteEncoderCanId = 31;
+  public static final int frontRightTurnAbsoluteEncoderCanId = 33;
   public static final int frontLeftTurnAbsoluteEncoderCanId = 43;
   public static final int backLeftTurnAbsoluteEncoderCanId = 45;
-  public static final int frontRightTurnAbsoluteEncoderCanId = 33;
-  public static final int backRightTurnAbsoluteEncoderCanId = 31;
 
   // Drive motor configuration
   public static final Distance wheelRadius = Inches.of(2);
