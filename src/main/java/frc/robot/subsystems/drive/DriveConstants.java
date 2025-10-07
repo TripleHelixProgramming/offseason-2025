@@ -196,7 +196,7 @@ public class DriveConstants {
   public static final CANBus kCANBus = new CANBus("canivore", "./logs/example.hoot");
 
   private static final boolean kInvertLeftSide = false;
-  private static final boolean kInvertRightSide = true;
+  private static final boolean kInvertRightSide = false;
 
   // These are only used for simulation
   private static final MomentOfInertia kSteerInertia = KilogramSquareMeters.of(0.004);
