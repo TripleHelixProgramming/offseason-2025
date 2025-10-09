@@ -6,8 +6,10 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.lib.AllianceSelector;
 import frc.lib.AutoOption;
@@ -24,6 +26,7 @@ import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.PathCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOBoron;
 import frc.robot.subsystems.drive.ModuleIO;
@@ -32,6 +35,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVision;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
+import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -87,10 +91,10 @@ public class Robot extends LoggedRobot {
         drive =
             new Drive(
                 new GyroIOBoron(),
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim());
+                new ModuleIOTalonFX(DriveConstants.FrontLeft),
+                new ModuleIOTalonFX(DriveConstants.FrontRight),
+                new ModuleIOTalonFX(DriveConstants.BackLeft),
+                new ModuleIOTalonFX(DriveConstants.BackRight));
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -109,10 +113,10 @@ public class Robot extends LoggedRobot {
         drive =
             new Drive(
                 new GyroIO() {},
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim(),
-                new ModuleIOSim());
+                new ModuleIOSim(DriveConstants.FrontLeft),
+                new ModuleIOSim(DriveConstants.FrontRight),
+                new ModuleIOSim(DriveConstants.BackLeft),
+                new ModuleIOSim(DriveConstants.BackRight));
         vision =
             new Vision(
                 drive::addVisionMeasurement,
@@ -155,6 +159,7 @@ public class Robot extends LoggedRobot {
     }
 
     // Initialize URCL
+    // TODO: Delete if no REV electronics are used
     Logger.registerURCL(URCL.startExternal());
 
     // Start AdvantageKit logger
@@ -162,6 +167,10 @@ public class Robot extends LoggedRobot {
 
     configureControlPanelBindings();
     configureAutoOptions();
+
+    SmartDashboard.putData(
+        "Align Encoders",
+        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
   }
 
   /** This function is called periodically during all modes. */
@@ -177,6 +186,8 @@ public class Robot extends LoggedRobot {
     // This must be called from the robot's periodic block in order for anything in
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
+    SmartDashboard.putData(CommandScheduler.getInstance());
+    SmartDashboard.putData(drive);
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
@@ -191,13 +202,13 @@ public class Robot extends LoggedRobot {
   public void disabledPeriodic() {
     allianceSelector.disabledPeriodic();
     autoSelector.disabledPeriodic();
-    ControllerSelector.getInstance().scan();
+    ControllerSelector.getInstance().scan(false);
   }
 
   /** This function is called once when autonomous mode is enabled. */
   @Override
   public void autonomousInit() {
-    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive));
+    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive).withName("Stop"));
     autoSelector.scheduleAuto();
   }
 
@@ -209,6 +220,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void teleopInit() {
     autoSelector.cancelAuto();
+    ControllerSelector.getInstance().scan(true);
   }
 
   /** This function is called periodically during operator control. */
@@ -270,7 +282,8 @@ public class Robot extends LoggedRobot {
             () -> -zorroDriver.getRightYAxis(),
             () -> -zorroDriver.getRightXAxis(),
             () -> -zorroDriver.getLeftXAxis(),
-            () -> zorroDriver.getHID().getEUp()));
+            () -> zorroDriver.getHID().getEUp(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when button G is pressed
     zorroDriver
@@ -301,7 +314,8 @@ public class Robot extends LoggedRobot {
             () -> -xboxDriver.getLeftY(),
             () -> -xboxDriver.getLeftX(),
             () -> -xboxDriver.getRightX(),
-            () -> !xboxDriver.getHID().getLeftBumperButton()));
+            () -> !xboxDriver.getHID().getLeftBumperButton(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when B button is pressed
     xboxDriver
