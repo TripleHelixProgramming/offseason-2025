@@ -52,7 +52,7 @@ public class VisionConstants {
   public static Angle maxRollError = Degrees.of(30);
   public static Angle maxPitchError = Degrees.of(30);
   public static Distance maxTravelDistance =
-      DriveConstants.maxWheelSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
+      DriveConstants.maxDriveSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
 
   // Standard deviation baselines, for 1 meter distance and 1 tag
   // (Adjusted automatically based on distance and # of tags)
