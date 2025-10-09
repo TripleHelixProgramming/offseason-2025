@@ -37,6 +37,10 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
+  private int ambiguityTestPassRate = 0;
+  private int flatPoseTestPassRate = 0;
+  private int withinBoundsTestPassRate = 0;
+
   public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.consumer = consumer;
     this.poseSupplier = poseSupplier;
@@ -234,23 +238,48 @@ public class Vision extends SubsystemBase {
   }
 
   public Boolean hasLowAmbiguity(PoseObservation observation) {
+    boolean pass = true;
     if (observation.tagCount() == 1) {
-      return observation.ambiguity() < maxAmbiguity;
-    } else {
-      return true;
+      pass = observation.ambiguity() < maxAmbiguity;
     }
+
+    if (pass) {
+      ambiguityTestPassRate++;
+    } else {
+      ambiguityTestPassRate--;
+    }
+
+    return pass;
   }
 
   public Boolean isPoseFlat(PoseObservation observation) {
-    return Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
-        && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
-        && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
+    boolean pass =
+        Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
+            && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
+            && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
+
+    if (pass) {
+      flatPoseTestPassRate++;
+    } else {
+      flatPoseTestPassRate--;
+    }
+
+    return pass;
   }
 
   public Boolean isWithinBoundaries(PoseObservation observation) {
-    return observation.pose().getX() > 0.0
-        && observation.pose().getX() < getAprilTagLayout().getFieldLength()
-        && observation.pose().getY() > 0.0
-        && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
+    boolean pass =
+        observation.pose().getX() > 0.0
+            && observation.pose().getX() < getAprilTagLayout().getFieldLength()
+            && observation.pose().getY() > 0.0
+            && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
+
+    if (pass) {
+      withinBoundsTestPassRate++;
+    } else {
+      withinBoundsTestPassRate--;
+    }
+
+    return pass;
   }
 }
