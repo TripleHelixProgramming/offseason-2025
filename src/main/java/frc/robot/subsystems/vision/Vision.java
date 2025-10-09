@@ -104,23 +104,18 @@ public class Vision extends SubsystemBase {
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
         // Check whether to reject pose
-        boolean rejectPose =
+        boolean acceptPose =
             // Must have observed at least one tag
-            observation.tagCount() == 0
+            observation.tagCount() > 0
 
                 // Any single-tag observation must have low ambiguity
-                || (observation.tagCount() == 1 && observation.ambiguity() > maxAmbiguity)
+                || hasLowAmbiguity(observation)
 
                 // Pose must be flat on the floor
-                || Math.abs(observation.pose().getZ()) > maxZError.in(Meters)
-                || Math.abs(observation.pose().getRotation().getX()) > maxRollError.in(Radians)
-                || Math.abs(observation.pose().getRotation().getY()) > maxPitchError.in(Radians)
+                || isPoseFlat(observation)
 
                 // Pose must be within the field boundaries
-                || observation.pose().getX() < 0.0
-                || observation.pose().getX() > getAprilTagLayout().getFieldLength()
-                || observation.pose().getY() < 0.0
-                || observation.pose().getY() > getAprilTagLayout().getFieldWidth()
+                || isWithinBoundaries(observation)
 
             // Pose must be within the max possible travel distance
             // TODO: Disable this filter during initial robot setup
@@ -134,14 +129,14 @@ public class Vision extends SubsystemBase {
 
         // Add pose to log
         robotPoses.add(observation.pose());
-        if (rejectPose) {
-          robotPosesRejected.add(observation.pose());
-        } else {
+        if (acceptPose) {
           robotPosesAccepted.add(observation.pose());
+        } else {
+          robotPosesRejected.add(observation.pose());
         }
 
         // Skip if rejected
-        if (rejectPose) {
+        if (!acceptPose) {
           continue;
         }
 
@@ -236,5 +231,26 @@ public class Vision extends SubsystemBase {
       }
     }
     return cachedLayout;
+  }
+
+  public Boolean hasLowAmbiguity(PoseObservation observation) {
+    if (observation.tagCount() == 1) {
+      return observation.ambiguity() < maxAmbiguity;
+    } else {
+      return true;
+    }
+  }
+
+  public Boolean isPoseFlat(PoseObservation observation) {
+    return Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
+        && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
+        && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
+  }
+
+  public Boolean isWithinBoundaries(PoseObservation observation) {
+    return observation.pose().getX() > 0.0
+        && observation.pose().getX() < getAprilTagLayout().getFieldLength()
+        && observation.pose().getY() > 0.0
+        && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
   }
 }
