@@ -40,6 +40,7 @@ public class Vision extends SubsystemBase {
   private int ambiguityTestPassRate = 0;
   private int flatPoseTestPassRate = 0;
   private int withinBoundsTestPassRate = 0;
+  private int moreThanZeroTagsTestPassRate = 0;
 
   public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.consumer = consumer;
@@ -110,7 +111,7 @@ public class Vision extends SubsystemBase {
         // Check whether to reject pose
         boolean acceptPose =
             // Must have observed at least one tag
-            observation.tagCount() > 0
+            moreThanZeroTags(observation)
 
                 // Any single-tag observation must have low ambiguity
                 || hasLowAmbiguity(observation)
@@ -202,6 +203,12 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(Pose3d[]::new));
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
+
+    Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate", ambiguityTestPassRate);
+    Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate);
+    Logger.recordOutput("Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate);
+    Logger.recordOutput(
+        "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate);
   }
 
   @FunctionalInterface
@@ -278,6 +285,18 @@ public class Vision extends SubsystemBase {
       withinBoundsTestPassRate++;
     } else {
       withinBoundsTestPassRate--;
+    }
+
+    return pass;
+  }
+
+  public Boolean moreThanZeroTags(PoseObservation observation) {
+    boolean pass = observation.tagCount() > 0;
+
+    if (pass) {
+      moreThanZeroTagsTestPassRate++;
+    } else {
+      moreThanZeroTagsTestPassRate--;
     }
 
     return pass;
