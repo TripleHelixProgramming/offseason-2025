@@ -79,8 +79,9 @@ public class Drive extends SubsystemBase {
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
   private Boolean firstVisionEstimate = true;
 
-  private final PIDController xController = new PIDController(10.0, 0.0, 0.0);
-  private final PIDController yController = new PIDController(10.0, 0.0, 0.0);
+  // PID controllers for following Choreo trajectories
+  private final PIDController xController = new PIDController(5.0, 0.0, 0.0);
+  private final PIDController yController = new PIDController(5.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
 
   public Drive(
