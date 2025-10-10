@@ -43,6 +43,13 @@ public class Vision extends SubsystemBase {
   LinearFilter withinBoundsTestPassRate = LinearFilter.movingAverage(20);
   LinearFilter moreThanZeroTagsTestPassRate = LinearFilter.movingAverage(20);
 
+  LinearFilter[] cameraPassRate = {
+    LinearFilter.movingAverage(20),
+    LinearFilter.movingAverage(20),
+    LinearFilter.movingAverage(20),
+    LinearFilter.movingAverage(20)
+  };
+
   public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.consumer = consumer;
     this.poseSupplier = poseSupplier;
@@ -141,6 +148,8 @@ public class Vision extends SubsystemBase {
           robotPosesRejected.add(observation.pose());
         }
 
+        cameraPassRate[cameraIndex].calculate(acceptPose ? 1.0 : 0.0);
+
         // Skip if rejected
         if (!acceptPose) {
           continue;
@@ -180,6 +189,9 @@ public class Vision extends SubsystemBase {
       Logger.recordOutput(
           "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
           robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
+      Logger.recordOutput(
+          "Vision/Camera" + Integer.toString(cameraIndex) + "/PassRate",
+          cameraPassRate[cameraIndex].lastValue());
       allTagPoses.addAll(tagPoses);
       allRobotPoses.addAll(robotPoses);
       allRobotPosesAccepted.addAll(robotPosesAccepted);
