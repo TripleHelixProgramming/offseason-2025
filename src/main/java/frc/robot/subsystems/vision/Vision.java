@@ -13,6 +13,7 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -37,10 +38,10 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
-  private int ambiguityTestPassRate = 0;
-  private int flatPoseTestPassRate = 0;
-  private int withinBoundsTestPassRate = 0;
-  private int moreThanZeroTagsTestPassRate = 0;
+  LinearFilter ambiguityTestPassRate = LinearFilter.movingAverage(20);
+  LinearFilter flatPoseTestPassRate = LinearFilter.movingAverage(20);
+  LinearFilter withinBoundsTestPassRate = LinearFilter.movingAverage(20);
+  LinearFilter moreThanZeroTagsTestPassRate = LinearFilter.movingAverage(20);
 
   public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.consumer = consumer;
@@ -114,13 +115,13 @@ public class Vision extends SubsystemBase {
             moreThanZeroTags(observation)
 
                 // Any single-tag observation must have low ambiguity
-                || hasLowAmbiguity(observation)
+                && hasLowAmbiguity(observation)
 
                 // Pose must be flat on the floor
-                || isPoseFlat(observation)
+                && isPoseFlat(observation)
 
                 // Pose must be within the field boundaries
-                || isWithinBoundaries(observation)
+                && isWithinBoundaries(observation)
 
             // Pose must be within the max possible travel distance
             // TODO: Disable this filter during initial robot setup
@@ -204,11 +205,12 @@ public class Vision extends SubsystemBase {
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
 
-    Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate", ambiguityTestPassRate);
-    Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate);
-    Logger.recordOutput("Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate);
+    Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate", ambiguityTestPassRate.lastValue());
+    Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate.lastValue());
     Logger.recordOutput(
-        "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate);
+        "Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate.lastValue());
+    Logger.recordOutput(
+        "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate.lastValue());
   }
 
   @FunctionalInterface
@@ -250,12 +252,7 @@ public class Vision extends SubsystemBase {
       pass = observation.ambiguity() < maxAmbiguity;
     }
 
-    if (pass) {
-      ambiguityTestPassRate++;
-    } else {
-      ambiguityTestPassRate--;
-    }
-
+    ambiguityTestPassRate.calculate(pass ? 1.0 : 0.0);
     return pass;
   }
 
@@ -265,12 +262,7 @@ public class Vision extends SubsystemBase {
             && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
             && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
 
-    if (pass) {
-      flatPoseTestPassRate++;
-    } else {
-      flatPoseTestPassRate--;
-    }
-
+    flatPoseTestPassRate.calculate(pass ? 1.0 : 0.0);
     return pass;
   }
 
@@ -281,24 +273,14 @@ public class Vision extends SubsystemBase {
             && observation.pose().getY() > 0.0
             && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
 
-    if (pass) {
-      withinBoundsTestPassRate++;
-    } else {
-      withinBoundsTestPassRate--;
-    }
-
+    withinBoundsTestPassRate.calculate(pass ? 1.0 : 0.0);
     return pass;
   }
 
   public Boolean moreThanZeroTags(PoseObservation observation) {
     boolean pass = observation.tagCount() > 0;
 
-    if (pass) {
-      moreThanZeroTagsTestPassRate++;
-    } else {
-      moreThanZeroTagsTestPassRate--;
-    }
-
+    moreThanZeroTagsTestPassRate.calculate(pass ? 1.0 : 0.0);
     return pass;
   }
 }
