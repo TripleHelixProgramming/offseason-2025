@@ -4,9 +4,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AutoConstants;
@@ -55,8 +52,6 @@ public class AutoSelector implements Supplier<Optional<AutoOption>> {
     this.allianceColorSupplier = allianceColorSupplier;
     io = new AutoSelectorIO(ports);
     autoSelectionChanged = new BooleanEvent(eventLoop, () -> updateAuto());
-    ShuffleboardTab tab = Shuffleboard.getTab("Driver");
-    tab.add("Auto Mode", new SendableChooser<Command>()); // Placeholder for now
   }
 
   public void addAuto(AutoOption newAuto) {

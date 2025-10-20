@@ -3,8 +3,6 @@ package frc.lib;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AutoConstants;
@@ -48,8 +46,6 @@ public class AllianceSelector {
     agreementInAllianceInputs = new BooleanEvent(eventLoop, () -> inputs.agreementInAllianceInputs);
     allianceChooser.setDefaultOption("Blue", Alliance.Blue);
     allianceChooser.addOption("Red", Alliance.Red);
-    ShuffleboardTab tab = Shuffleboard.getTab("Driver");
-    tab.add("Alliance Color", allianceChooser);
   }
 
   /**
