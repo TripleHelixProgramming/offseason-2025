@@ -3,7 +3,6 @@ package frc.lib;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.AutoConstants;
 import org.littletonrobotics.junction.Logger;
@@ -18,7 +17,6 @@ public class AllianceSelector {
   private EventLoop eventLoop = new EventLoop();
   private BooleanEvent changedAlliance;
   private BooleanEvent agreementInAllianceInputs;
-  private final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
 
   /** Initializes the AllianceSelector singleton. */
   public static void initialize() {
@@ -44,8 +42,6 @@ public class AllianceSelector {
     io = new AllianceSelectorIO(port);
     changedAlliance = new BooleanEvent(eventLoop, () -> inputs.allianceChanged);
     agreementInAllianceInputs = new BooleanEvent(eventLoop, () -> inputs.agreementInAllianceInputs);
-    allianceChooser.setDefaultOption("Blue", Alliance.Blue);
-    allianceChooser.addOption("Red", Alliance.Red);
   }
 
   /**
