@@ -3,7 +3,11 @@ package frc.lib;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.AutoConstants;
 import org.littletonrobotics.junction.Logger;
 
 public class AllianceSelector {
@@ -11,15 +15,41 @@ public class AllianceSelector {
   private final AllianceSelectorIO io;
   private final AllianceSelectorIOInputsAutoLogged inputs =
       new AllianceSelectorIOInputsAutoLogged();
+  private static AllianceSelector instance;
 
   private EventLoop eventLoop = new EventLoop();
   private BooleanEvent changedAlliance;
   private BooleanEvent agreementInAllianceInputs;
+  private final SendableChooser<Alliance> allianceChooser = new SendableChooser<>();
 
-  public AllianceSelector(int port) {
+  /** Initializes the AllianceSelector singleton. */
+  public static void initialize() {
+    if (instance == null) {
+      instance = new AllianceSelector(AutoConstants.kAllianceColorSelectorPort);
+    }
+  }
+
+  /**
+   * Returns the singleton instance of the AllianceSelector.
+   *
+   * @throws IllegalStateException if initialize() has not been called yet.
+   * @return The singleton instance.
+   */
+  public static AllianceSelector getInstance() {
+    if (instance == null) {
+      throw new IllegalStateException("AllianceSelector not initialized.");
+    }
+    return instance;
+  }
+
+  private AllianceSelector(int port) {
     io = new AllianceSelectorIO(port);
     changedAlliance = new BooleanEvent(eventLoop, () -> inputs.allianceChanged);
     agreementInAllianceInputs = new BooleanEvent(eventLoop, () -> inputs.agreementInAllianceInputs);
+    allianceChooser.setDefaultOption("Blue", Alliance.Blue);
+    allianceChooser.addOption("Red", Alliance.Red);
+    ShuffleboardTab tab = Shuffleboard.getTab("Driver");
+    tab.add("Alliance Color", allianceChooser);
   }
 
   /**

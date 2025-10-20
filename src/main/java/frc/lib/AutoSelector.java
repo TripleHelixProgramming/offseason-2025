@@ -4,8 +4,12 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.event.BooleanEvent;
 import edu.wpi.first.wpilibj.event.EventLoop;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Constants.AutoConstants;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -17,23 +21,42 @@ public class AutoSelector implements Supplier<Optional<AutoOption>> {
   private final AutoSelectorIO io;
   private final AutoSelectorIOInputsAutoLogged inputs = new AutoSelectorIOInputsAutoLogged();
 
+  private static AutoSelector instance;
   private Optional<AutoOption> currentAutoOption;
   private Supplier<Alliance> allianceColorSupplier;
   private List<AutoOption> autoOptions = new ArrayList<>();
   private EventLoop eventLoop = new EventLoop();
   private BooleanEvent autoSelectionChanged;
 
+  /** Initializes the AutoSelector singleton. */
+  public static void initialize() {
+    if (instance == null) {
+      instance =
+          new AutoSelector(
+              AutoConstants.kAutonomousModeSelectorPorts,
+              AllianceSelector.getInstance()::getAllianceColor);
+    }
+  }
+
   /**
-   * Constructs an autonomous selector switch
+   * Returns the singleton instance of the AutoSelector.
    *
-   * @param ports An array of DIO ports for selecting an autonomous mode
-   * @param allianceColorSupplier A method that supplies the current alliance color
-   * @param autoOptions An array of autonomous mode options
+   * @throws IllegalStateException if initialize() has not been called yet.
+   * @return The singleton instance.
    */
-  public AutoSelector(int[] ports, Supplier<Alliance> allianceColorSupplier) {
+  public static AutoSelector getInstance() {
+    if (instance == null) {
+      throw new IllegalStateException("AutoSelector not initialized.");
+    }
+    return instance;
+  }
+
+  private AutoSelector(int[] ports, Supplier<Alliance> allianceColorSupplier) {
     this.allianceColorSupplier = allianceColorSupplier;
     io = new AutoSelectorIO(ports);
     autoSelectionChanged = new BooleanEvent(eventLoop, () -> updateAuto());
+    ShuffleboardTab tab = Shuffleboard.getTab("Driver");
+    tab.add("Auto Mode", new SendableChooser<Command>()); // Placeholder for now
   }
 
   public void addAuto(AutoOption newAuto) {

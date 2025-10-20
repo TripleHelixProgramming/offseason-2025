@@ -1,7 +1,6 @@
 package frc.robot;
 
 import static edu.wpi.first.units.Units.Meters;
-import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -19,23 +18,13 @@ import frc.lib.ControllerSelector;
 import frc.lib.ControllerSelector.ControllerConfig;
 import frc.lib.ControllerSelector.ControllerFunction;
 import frc.lib.ControllerSelector.ControllerType;
-import frc.robot.Constants.AutoConstants;
 import frc.robot.auto.B_Path;
 import frc.robot.auto.R_MoveAndRotate;
 import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.PathCommands;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.subsystems.drive.GyroIO;
-import frc.robot.subsystems.drive.GyroIOBoron;
-import frc.robot.subsystems.drive.ModuleIO;
-import frc.robot.subsystems.drive.ModuleIOSim;
-import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
-import frc.robot.subsystems.vision.VisionIO;
-import frc.robot.subsystems.vision.VisionIOPhotonVision;
-import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -51,17 +40,14 @@ import org.littletonrobotics.urcl.URCL;
  * project.
  */
 public class Robot extends LoggedRobot {
-  private final AllianceSelector allianceSelector =
-      new AllianceSelector(AutoConstants.kAllianceColorSelectorPort);
-  private final AutoSelector autoSelector =
-      new AutoSelector(
-          AutoConstants.kAutonomousModeSelectorPorts, allianceSelector::getAllianceColor);
-
-  // Subsystems
-  private Drive drive;
-  private Vision vision;
 
   public Robot() {
+    // Trigger subsystem instantiation
+    Drive.initialize();
+    Vision.initialize();
+    AllianceSelector.initialize();
+    AutoSelector.initialize();
+
     // Record metadata
     Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
     Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
@@ -85,52 +71,11 @@ public class Robot extends LoggedRobot {
       case REAL: // Running on a real robot
         // Log to a USB stick ("/U/logs")
         Logger.addDataReceiver(new WPILOGWriter());
-        Logger.addDataReceiver(new NT4Publisher());
-
-        // Instantiate hardware IO implementations
-        drive =
-            new Drive(
-                new GyroIOBoron(),
-                new ModuleIOTalonFX(DriveConstants.FrontLeft),
-                new ModuleIOTalonFX(DriveConstants.FrontRight),
-                new ModuleIOTalonFX(DriveConstants.BackLeft),
-                new ModuleIOTalonFX(DriveConstants.BackRight));
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIOPhotonVision(cameraFrontRightName, robotToFrontRightCamera),
-                new VisionIOPhotonVision(cameraFrontLeftName, robotToFrontLeftCamera),
-                new VisionIOPhotonVision(cameraBackRightName, robotToBackRightCamera),
-                new VisionIOPhotonVision(cameraBackLeftName, robotToBackLeftCamera));
-        break;
-
+        // Fallthrough to NT publisher
       case SIM: // Running a physics simulator
         // Log to NT
         Logger.addDataReceiver(new NT4Publisher());
-
-        // Instantiate physics sim IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(DriveConstants.FrontLeft),
-                new ModuleIOSim(DriveConstants.FrontRight),
-                new ModuleIOSim(DriveConstants.BackLeft),
-                new ModuleIOSim(DriveConstants.BackRight));
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIOPhotonVisionSim(
-                    cameraFrontRightName, robotToFrontRightCamera, drive::getPose),
-                new VisionIOPhotonVisionSim(
-                    cameraFrontLeftName, robotToFrontLeftCamera, drive::getPose),
-                new VisionIOPhotonVisionSim(
-                    cameraBackRightName, robotToBackRightCamera, drive::getPose),
-                new VisionIOPhotonVisionSim(
-                    cameraBackLeftName, robotToBackLeftCamera, drive::getPose));
         break;
-
       case REPLAY: // Replaying a log
       default:
         // Set up replay source
@@ -138,23 +83,6 @@ public class Robot extends LoggedRobot {
         String logPath = LogFileUtil.findReplayLog();
         Logger.setReplaySource(new WPILOGReader(logPath));
         Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
-
-        // Disable IO implementations
-        drive =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        vision =
-            new Vision(
-                drive::addVisionMeasurement,
-                drive::getPose,
-                new VisionIO() {},
-                new VisionIO() {},
-                new VisionIO() {},
-                new VisionIO() {});
         break;
     }
 
@@ -168,9 +96,11 @@ public class Robot extends LoggedRobot {
     configureControlPanelBindings();
     configureAutoOptions();
 
+    Vision.getInstance().addConsumer(Drive.getInstance()::addVisionMeasurement);
+
     SmartDashboard.putData(
         "Align Encoders",
-        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
+        new InstantCommand(() -> Drive.getInstance().zeroAbsoluteEncoders()).ignoringDisable(true));
   }
 
   /** This function is called periodically during all modes. */
@@ -187,7 +117,7 @@ public class Robot extends LoggedRobot {
     // the Command-based framework to work.
     CommandScheduler.getInstance().run();
     SmartDashboard.putData(CommandScheduler.getInstance());
-    SmartDashboard.putData(drive);
+    SmartDashboard.putData(Drive.getInstance());
 
     // Return to non-RT thread priority (do not modify the first argument)
     // Threads.setCurrentThreadPriority(false, 10);
@@ -200,16 +130,18 @@ public class Robot extends LoggedRobot {
   /** This function is called periodically when disabled. */
   @Override
   public void disabledPeriodic() {
-    allianceSelector.disabledPeriodic();
-    autoSelector.disabledPeriodic();
+    AllianceSelector.getInstance().disabledPeriodic();
+    AutoSelector.getInstance().disabledPeriodic();
     ControllerSelector.getInstance().scan(false);
   }
 
   /** This function is called once when autonomous mode is enabled. */
   @Override
   public void autonomousInit() {
-    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive).withName("Stop"));
-    autoSelector.scheduleAuto();
+    Drive.getInstance()
+        .setDefaultCommand(
+            Commands.runOnce(Drive.getInstance()::stop, Drive.getInstance()).withName("Stop"));
+    AutoSelector.getInstance().scheduleAuto();
   }
 
   /** This function is called periodically during autonomous. */
@@ -219,7 +151,7 @@ public class Robot extends LoggedRobot {
   /** This function is called once when teleop mode is enabled. */
   @Override
   public void teleopInit() {
-    autoSelector.cancelAuto();
+    AutoSelector.getInstance().cancelAuto();
     ControllerSelector.getInstance().scan(true);
   }
 
@@ -276,14 +208,15 @@ public class Robot extends LoggedRobot {
 
     // Drive in field-relative mode while switch E is up
     // Drive in robot-relative mode while switch E is down
-    drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -zorroDriver.getRightYAxis(),
-            () -> -zorroDriver.getRightXAxis(),
-            () -> -zorroDriver.getLeftXAxis(),
-            () -> zorroDriver.getHID().getEUp(),
-            allianceSelector::fieldRotated));
+    Drive.getInstance()
+        .setDefaultCommand(
+            DriveCommands.joystickDrive(
+                Drive.getInstance(),
+                () -> -zorroDriver.getRightYAxis(),
+                () -> -zorroDriver.getRightXAxis(),
+                () -> -zorroDriver.getLeftXAxis(),
+                () -> zorroDriver.getHID().getEUp(),
+                AllianceSelector.getInstance()::fieldRotated));
 
     // Reset gyro to 0° when button G is pressed
     zorroDriver
@@ -291,16 +224,19 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
+                        Drive.getInstance()
+                            .setPose(
+                                new Pose2d(
+                                    Drive.getInstance().getPose().getTranslation(),
+                                    Rotation2d.kZero)),
+                    Drive.getInstance())
                 .ignoringDisable(true));
 
     // Drive 1m forward while button A is held
-    zorroDriver.AIn().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
+    zorroDriver.AIn().whileTrue(PathCommands.advanceForward(Drive.getInstance(), Meters.of(1)));
 
     // Switch to X pattern when button D is pressed
-    zorroDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    zorroDriver.DIn().onTrue(Commands.runOnce(Drive.getInstance()::stopWithX, Drive.getInstance()));
   }
 
   public void bindXboxDriver(int port) {
@@ -308,14 +244,15 @@ public class Robot extends LoggedRobot {
 
     // Drive in field-relative mode while left bumper is released
     // Drive in robot-relative mode while left bumper is pressed
-    drive.setDefaultCommand(
-        DriveCommands.joystickDrive(
-            drive,
-            () -> -xboxDriver.getLeftY(),
-            () -> -xboxDriver.getLeftX(),
-            () -> -xboxDriver.getRightX(),
-            () -> !xboxDriver.getHID().getLeftBumperButton(),
-            allianceSelector::fieldRotated));
+    Drive.getInstance()
+        .setDefaultCommand(
+            DriveCommands.joystickDrive(
+                Drive.getInstance(),
+                () -> -xboxDriver.getLeftY(),
+                () -> -xboxDriver.getLeftX(),
+                () -> -xboxDriver.getRightX(),
+                () -> !xboxDriver.getHID().getLeftBumperButton(),
+                AllianceSelector.getInstance()::fieldRotated));
 
     // Reset gyro to 0° when B button is pressed
     xboxDriver
@@ -323,13 +260,16 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
-                    drive)
+                        Drive.getInstance()
+                            .setPose(
+                                new Pose2d(
+                                    Drive.getInstance().getPose().getTranslation(),
+                                    Rotation2d.kZero)),
+                    Drive.getInstance())
                 .ignoringDisable(true));
 
     // Drive 1m forward while A button is held
-    xboxDriver.a().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
+    xboxDriver.a().whileTrue(PathCommands.advanceForward(Drive.getInstance(), Meters.of(1)));
 
     // Align with pose, approaching in correct orientation from 1 m away
     // xboxDriver
@@ -345,7 +285,7 @@ public class Robot extends LoggedRobot {
     //     PathCommands.dockToTargetPoint(drive, new Translation2d(8.2296, 4.1148), Meters.of(2)));
 
     // Switch to X pattern when X button is pressed
-    xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
+    xboxDriver.x().onTrue(Commands.runOnce(Drive.getInstance()::stopWithX, Drive.getInstance()));
   }
 
   public void bindXboxOperator(int port) {
@@ -353,8 +293,11 @@ public class Robot extends LoggedRobot {
   }
 
   public void configureAutoOptions() {
-    autoSelector.addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(drive)));
-    autoSelector.addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(drive)));
-    autoSelector.addAuto(new AutoOption(Alliance.Blue, 3, new B_Path(drive)));
+    AutoSelector.getInstance()
+        .addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(Drive.getInstance())));
+    AutoSelector.getInstance()
+        .addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(Drive.getInstance())));
+    AutoSelector.getInstance()
+        .addAuto(new AutoOption(Alliance.Blue, 3, new B_Path(Drive.getInstance())));
   }
 }

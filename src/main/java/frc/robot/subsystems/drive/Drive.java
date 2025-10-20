@@ -84,7 +84,52 @@ public class Drive extends SubsystemBase {
   private final PIDController yController = new PIDController(5.0, 0.0, 0.0);
   private final PIDController headingController = new PIDController(7.5, 0.0, 0.0);
 
-  public Drive(
+  private static Drive instance;
+
+  /** Initializes the Drive subsystem singleton. */
+  public static void initialize() {
+    if (instance == null) {
+      getInstance();
+    }
+  }
+
+  public static Drive getInstance() {
+    if (instance == null) {
+      switch (Constants.currentMode) {
+        case REAL:
+          instance =
+              new Drive(
+                  new GyroIOBoron(),
+                  new ModuleIOTalonFX(FrontLeft),
+                  new ModuleIOTalonFX(FrontRight),
+                  new ModuleIOTalonFX(BackLeft),
+                  new ModuleIOTalonFX(BackRight));
+          break;
+        case SIM:
+          instance =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIOSim(FrontLeft),
+                  new ModuleIOSim(FrontRight),
+                  new ModuleIOSim(BackLeft),
+                  new ModuleIOSim(BackRight));
+          break;
+        case REPLAY:
+        default:
+          instance =
+              new Drive(
+                  new GyroIO() {},
+                  new ModuleIO() {},
+                  new ModuleIO() {},
+                  new ModuleIO() {},
+                  new ModuleIO() {});
+          break;
+      }
+    }
+    return instance;
+  }
+
+  private Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
       ModuleIO frModuleIO,
