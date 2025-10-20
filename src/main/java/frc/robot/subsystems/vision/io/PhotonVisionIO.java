@@ -5,19 +5,18 @@
 // license that can be found in the LICENSE file
 // at the root directory of this project.
 
-package frc.robot.subsystems.vision;
+package frc.robot.subsystems.vision.io;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import frc.robot.subsystems.vision.Vision;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
 import org.photonvision.PhotonCamera;
 
 /** IO implementation for real PhotonVision hardware. */
-public class VisionIOPhotonVision implements VisionIO {
+public class PhotonVisionIO implements VisionIO {
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
 
@@ -27,7 +26,7 @@ public class VisionIOPhotonVision implements VisionIO {
    * @param name The configured name of the camera.
    * @param rotationSupplier The 3D position of the camera relative to the robot.
    */
-  public VisionIOPhotonVision(String name, Transform3d robotToCamera) {
+  public PhotonVisionIO(String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
     this.robotToCamera = robotToCamera;
   }
@@ -37,8 +36,8 @@ public class VisionIOPhotonVision implements VisionIO {
     inputs.connected = camera.isConnected();
 
     // Read new camera observations
-    Set<Short> tagIds = new HashSet<>();
-    List<PoseObservation> poseObservations = new LinkedList<>();
+    var tagIds = new HashSet<Short>();
+    var poseObservations = new LinkedList<PoseObservation>();
     for (var result : camera.getAllUnreadResults()) {
       // Update latest target observation
       if (result.hasTargets()) {
@@ -55,9 +54,9 @@ public class VisionIOPhotonVision implements VisionIO {
         var multitagResult = result.multitagResult.get();
 
         // Calculate robot pose
-        Transform3d fieldToCamera = multitagResult.estimatedPose.best;
-        Transform3d fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
-        Pose3d robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
+        var fieldToCamera = multitagResult.estimatedPose.best;
+        var fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
+        var robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
 
         // Calculate average tag distance
         double totalTagDistance = 0.0;
@@ -84,12 +83,12 @@ public class VisionIOPhotonVision implements VisionIO {
         // Calculate robot pose
         var tagPose = Vision.getAprilTagLayout().getTagPose(target.fiducialId);
         if (tagPose.isPresent()) {
-          Transform3d fieldToTarget =
+          var fieldToTarget =
               new Transform3d(tagPose.get().getTranslation(), tagPose.get().getRotation());
-          Transform3d cameraToTarget = target.bestCameraToTarget;
-          Transform3d fieldToCamera = fieldToTarget.plus(cameraToTarget.inverse());
-          Transform3d fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
-          Pose3d robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
+          var cameraToTarget = target.bestCameraToTarget;
+          var fieldToCamera = fieldToTarget.plus(cameraToTarget.inverse());
+          var fieldToRobot = fieldToCamera.plus(robotToCamera.inverse());
+          var robotPose = new Pose3d(fieldToRobot.getTranslation(), fieldToRobot.getRotation());
 
           // Add tag ID
           tagIds.add((short) target.fiducialId);

@@ -2,9 +2,9 @@ package frc.lib;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.Robot;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntConsumer;
@@ -25,8 +25,8 @@ import org.littletonrobotics.junction.Logger;
  *
  * <p><b>Usage:</b>
  *
- * <p>1. Call the static {@code configure()} method a single time in {@code robotInit()} to set up
- * the desired controller configurations.
+ * <p>1. Call the {@code configure()} method on the singleton instance in {@code robotInit()} to set
+ * up the desired controller configurations.
  *
  * <p>2. Periodically call {@code ControllerSelector.getInstance().scan()} from a loop in your robot
  * code (e.g., using a Notifier or from {@code disabledPeriodic()}) to handle controller changes.
@@ -36,29 +36,20 @@ public class ControllerSelector {
   private static ControllerSelector instance;
 
   /**
-   * Configures the ControllerSelector singleton with the specified controller configurations. This
-   * method must be called once before getting the instance.
-   *
-   * @param configs A varargs list of controller configurations.
-   */
-  public static void configure(ControllerConfig... configs) {
-    if (instance == null) {
-      instance = new ControllerSelector(configs);
-    }
-  }
-
-  /**
    * Returns the singleton instance of the ControllerSelector.
    *
-   * @throws IllegalStateException if configure() has not been called yet.
    * @return The singleton instance.
    */
   public static ControllerSelector getInstance() {
     if (instance == null) {
-      throw new IllegalStateException(
-          "ControllerSelector has not been configured. Call configure() first.");
+      instance = new ControllerSelector();
     }
     return instance;
+  }
+
+  /** Configures the ControllerSelector with the specified controller configurations. */
+  public void configure(ControllerConfig... configs) {
+    this.controllerConfigs = configs;
   }
 
   /** Defines the possible functions for a controller: DRIVER or OPERATOR. */
@@ -123,27 +114,20 @@ public class ControllerSelector {
 
   private static final int NUM_CONTROLLER_PORTS = DriverStation.kJoystickPorts;
 
-  private final ControllerConfig[] controllerConfigs;
+  private ControllerConfig[] controllerConfigs = {};
   private final GenericHID[] controllers;
   private final String[] controllerNames;
 
   /**
    * Constructs a new ControllerSelector object. This is private to enforce the singleton pattern.
-   *
-   * @param configs A varargs list of controller configurations.
    */
-  private ControllerSelector(ControllerConfig... configs) {
-    this.controllerConfigs = configs;
-
+  private ControllerSelector() {
     // Create a GenericHID object for each port to allow polling for names.
     controllers = new GenericHID[NUM_CONTROLLER_PORTS];
     controllerNames = new String[NUM_CONTROLLER_PORTS];
     for (int i = 0; i < NUM_CONTROLLER_PORTS; i++) {
       controllers[i] = new GenericHID(i);
     }
-
-    // Perform the initial scan and binding.
-    scan(true);
   }
 
   /**
@@ -182,23 +166,26 @@ public class ControllerSelector {
   }
 
   /**
-   * Scans for controller changes and re-binds controls if necessary. This method should be called
-   * periodically (e.g., in disabledPeriodic or a dedicated Notifier).
+   * Scans for controller changes and re-binds controls if a change is detected or if forced. This
+   * method should be called periodically (e.g., in {@code disabledPeriodic}) and can be forced on
+   * mode changes (e.g., in {@code teleopInit}).
    *
    * <p>The process is as follows:
    *
-   * <p>1. Checks if the connected controllers have changed. If not, it returns immediately.
+   * <p>1. Checks if the connected controllers have changed. If not, and not forced, it returns.
    *
    * <p>2. Clears all existing command bindings to ensure a clean state.
    *
    * <p>3. Iterates through the configurations to find the highest-priority match for the DRIVER
-   * controller. If found, its binding callback is executed immediately.
+   * controller. If found, its binding callback is executed.
    *
    * <p>4. Iterates again to find the highest-priority match for the OPERATOR controller, ensuring
-   * it doesn't use the same port as the driver. If found, its binding callback is executed
-   * immediately.
+   * it doesn't use the same port as the driver. If found, its binding callback is executed.
    *
    * <p>5. Logs the final controller assignments.
+   *
+   * @param force If true, the scan and re-binding will execute even if no controller changes are
+   *     detected.
    */
   public void scan(boolean force) {
     if (!controllersChanged() && !force) {
@@ -206,7 +193,7 @@ public class ControllerSelector {
     }
 
     // Clear all button bindings to prepare for rebinding
-    CommandScheduler.getInstance().getDefaultButtonLoop().clear();
+    Robot.commandScheduler.getDefaultButtonLoop().clear();
 
     int driverPort = -1;
     int operatorPort = -1;

@@ -35,6 +35,7 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
+import frc.robot.Robot;
 import java.util.Queue;
 
 /**
@@ -153,11 +154,11 @@ public class ModuleIOTalonFX implements ModuleIO {
     cancoder.getConfigurator().apply(cancoderConfig);
 
     // Create timestamp queue
-    timestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
+    timestampQueue = Robot.odometryThread.makeTimestampQueue();
 
     // Create drive status signals
     drivePosition = driveTalon.getPosition();
-    drivePositionQueue = PhoenixOdometryThread.getInstance().registerSignal(drivePosition.clone());
+    drivePositionQueue = Robot.odometryThread.registerSignal(drivePosition.clone());
     driveVelocity = driveTalon.getVelocity();
     driveAppliedVolts = driveTalon.getMotorVoltage();
     driveCurrent = driveTalon.getStatorCurrent();
@@ -165,7 +166,7 @@ public class ModuleIOTalonFX implements ModuleIO {
     // Create turn status signals
     turnAbsolutePosition = cancoder.getAbsolutePosition();
     turnPosition = turnTalon.getPosition();
-    turnPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(turnPosition.clone());
+    turnPositionQueue = Robot.odometryThread.registerSignal(turnPosition.clone());
     turnVelocity = turnTalon.getVelocity();
     turnAppliedVolts = turnTalon.getMotorVoltage();
     turnCurrent = turnTalon.getStatorCurrent();

@@ -10,7 +10,11 @@ package frc.robot.subsystems.vision;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import frc.robot.Constants;
-import frc.robot.subsystems.drive.Drive;
+import frc.robot.Robot;
+import frc.robot.subsystems.vision.io.PhotonVisionIO;
+import frc.robot.subsystems.vision.io.PhotonVisionSimIO;
+import frc.robot.subsystems.vision.io.VisionIO;
+import frc.robot.subsystems.vision.io.VisionIOInputsAutoLogged;
 
 /**
  * Represents a single camera on the robot. This enum is responsible for defining the physical
@@ -167,12 +171,10 @@ public enum Camera {
 
     switch (Constants.currentMode) {
       case REAL:
-        io = new VisionIOPhotonVision(deviceName, robotToCamera);
+        io = new PhotonVisionIO(deviceName, robotToCamera);
         break;
       case SIM:
-        io =
-            new VisionIOPhotonVisionSim(
-                deviceName, robotToCamera, () -> Drive.getInstance().getPose());
+        io = new PhotonVisionSimIO(deviceName, robotToCamera, () -> Robot.drive.getPose());
         break;
       case REPLAY:
       default:

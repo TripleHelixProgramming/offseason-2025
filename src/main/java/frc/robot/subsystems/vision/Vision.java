@@ -29,8 +29,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.subsystems.vision.VisionIO.PoseObservation;
-import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
+import frc.robot.subsystems.vision.io.VisionIO.PoseObservation;
+import frc.robot.subsystems.vision.io.VisionIO.PoseObservationType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -271,17 +271,15 @@ public class Vision extends SubsystemBase {
 
       // Log camera datadata
       Logger.recordOutput(
-          "Vision/Camera." + camera.name() + "/TagPoses",
-          tagPoses.toArray(new Pose3d[tagPoses.size()]));
+          "Vision/Camera." + camera.name() + "/TagPoses", tagPoses.toArray(Pose3d[]::new));
       Logger.recordOutput(
-          "Vision/Camera." + camera.name() + "/RobotPoses",
-          robotPoses.toArray(new Pose3d[robotPoses.size()]));
+          "Vision/Camera." + camera.name() + "/RobotPoses", robotPoses.toArray(Pose3d[]::new));
       Logger.recordOutput(
           "Vision/Camera." + camera.name() + "/RobotPosesAccepted",
-          robotPosesAccepted.toArray(new Pose3d[robotPosesAccepted.size()]));
+          robotPosesAccepted.toArray(Pose3d[]::new));
       Logger.recordOutput(
           "Vision/Camera." + camera.name() + "/RobotPosesRejected",
-          robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
+          robotPosesRejected.toArray(Pose3d[]::new));
       Logger.recordOutput(
           "Vision/Camera." + camera.name() + "/PassRate",
           cameraPassRate[camera.ordinal()].lastValue());

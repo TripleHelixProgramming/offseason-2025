@@ -18,6 +18,7 @@ import static frc.robot.subsystems.drive.DriveConstants.*;
 import com.reduxrobotics.sensors.canandgyro.Canandgyro;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Robot;
 import java.util.Queue;
 
 /** IO implementation for NavX. */
@@ -28,8 +29,8 @@ public class GyroIOBoron implements GyroIO {
 
   public GyroIOBoron() {
     canandgyro = new Canandgyro(gyroCanId);
-    yawTimestampQueue = PhoenixOdometryThread.getInstance().makeTimestampQueue();
-    yawPositionQueue = PhoenixOdometryThread.getInstance().registerSignal(canandgyro::getYaw);
+    yawTimestampQueue = Robot.odometryThread.makeTimestampQueue();
+    yawPositionQueue = Robot.odometryThread.registerSignal(canandgyro::getYaw);
   }
 
   // Check if gyro is calibrated

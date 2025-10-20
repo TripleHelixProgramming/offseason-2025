@@ -4,6 +4,7 @@ import edu.wpi.first.wpilibj.event.EventLoop;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Robot;
 
 /**
  * A version of {@link ZorroController} with {@link Trigger} factories for command-based.
@@ -42,7 +43,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger BDown() {
-    return BDown(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return BDown(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -63,7 +64,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger BMid() {
-    return BMid(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return BMid(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -84,7 +85,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger BUp() {
-    return BUp(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return BUp(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -105,7 +106,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger EDown() {
-    return EDown(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return EDown(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -126,7 +127,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger EUp() {
-    return EUp(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return EUp(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -147,7 +148,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger AIn() {
-    return AIn(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return AIn(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -168,7 +169,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger GIn() {
-    return GIn(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return GIn(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -189,7 +190,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger CDown() {
-    return CDown(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return CDown(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -210,7 +211,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger CMid() {
-    return CMid(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return CMid(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -231,7 +232,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger CUp() {
-    return CUp(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return CUp(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -252,7 +253,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger FDown() {
-    return FDown(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return FDown(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -273,7 +274,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger FUp() {
-    return FUp(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return FUp(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -294,7 +295,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger DIn() {
-    return DIn(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return DIn(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**
@@ -315,7 +316,7 @@ public class CommandZorroController extends CommandGenericHID {
    * @see #a(EventLoop)
    */
   public Trigger HIn() {
-    return HIn(CommandScheduler.getInstance().getDefaultButtonLoop());
+    return HIn(Robot.commandScheduler.getDefaultButtonLoop());
   }
 
   /**

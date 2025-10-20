@@ -24,6 +24,7 @@ import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.PathCommands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.PhoenixOdometryThread;
 import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -41,31 +42,107 @@ import org.littletonrobotics.urcl.URCL;
  */
 public class Robot extends LoggedRobot {
 
+  public static final CommandScheduler commandScheduler = CommandScheduler.getInstance();
+  public static final Drive drive = Drive.getInstance();
+  public static final Vision vision = Vision.getInstance();
+  public static final AllianceSelector allianceSelector = AllianceSelector.getInstance();
+  public static final AutoSelector autoSelector = AutoSelector.getInstance();
+  public static final ControllerSelector controllerSelector = ControllerSelector.getInstance();
+  public static final PhoenixOdometryThread odometryThread = PhoenixOdometryThread.getInstance();
+
   public Robot() {
-    // Trigger subsystem instantiation
-    Drive.initialize();
-    Vision.initialize();
-    AllianceSelector.initialize();
-    AutoSelector.initialize();
+    super(0.02);
+    configureMetadata();
+    configureLogging();
+    configureControlPanelBindings();
+    configureAutoOptions();
+    configureVision();
+    configureSmartDashboard();
+  }
 
-    // Record metadata
-    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
-    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
-    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
-    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
-    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
-    switch (BuildConstants.DIRTY) {
-      case 0:
-        Logger.recordMetadata("GitDirty", "All changes committed");
-        break;
-      case 1:
-        Logger.recordMetadata("GitDirty", "Uncomitted changes");
-        break;
-      default:
-        Logger.recordMetadata("GitDirty", "Unknown");
-        break;
-    }
+  /** This function is called periodically during all modes. */
+  @Override
+  public void robotPeriodic() {
+    // Optionally switch the thread to high priority to improve loop
+    // timing (see the template project documentation for details)
+    // Threads.setCurrentThreadPriority(true, 99);
 
+    // Runs the Scheduler. This is responsible for polling buttons, adding
+    // newly-scheduled commands, running already-scheduled commands, removing
+    // finished or interrupted commands, and running subsystem periodic() methods.
+    // This must be called from the robot's periodic block in order for anything in
+    // the Command-based framework to work.
+    commandScheduler.run();
+    SmartDashboard.putData(commandScheduler);
+    SmartDashboard.putData(drive);
+
+    // Return to non-RT thread priority (do not modify the first argument)
+    // Threads.setCurrentThreadPriority(false, 10);
+  }
+
+  /** This function is called once when the robot is disabled. */
+  @Override
+  public void disabledInit() {}
+
+  /** This function is called periodically when disabled. */
+  @Override
+  public void disabledPeriodic() {
+    allianceSelector.disabledPeriodic();
+    autoSelector.disabledPeriodic();
+    controllerSelector.scan(false);
+  }
+
+  /** This function is called once when autonomous mode is enabled. */
+  @Override
+  public void autonomousInit() {
+    drive.setDefaultCommand(Commands.runOnce(drive::stop, drive).withName("Stop"));
+    autoSelector.scheduleAuto();
+  }
+
+  /** This function is called periodically during autonomous. */
+  @Override
+  public void autonomousPeriodic() {}
+  /** This function is called once when teleop mode is enabled. */
+  @Override
+  public void teleopInit() {
+    autoSelector.cancelAuto();
+    controllerSelector.scan(true);
+  }
+
+  /** This function is called periodically during operator control. */
+  @Override
+  public void teleopPeriodic() {}
+
+  /** This function is called once when test mode is enabled. */
+  @Override
+  public void testInit() {
+    // Cancels all running commands at the start of test mode.
+    commandScheduler.cancelAll();
+  }
+
+  /** This function is called periodically during test mode. */
+  @Override
+  public void testPeriodic() {}
+
+  /** This function is called once when the robot is first started up. */
+  @Override
+  public void simulationInit() {}
+
+  /** This function is called periodically whilst in simulation. */
+  @Override
+  public void simulationPeriodic() {}
+
+  private void configureSmartDashboard() {
+    SmartDashboard.putData(
+        "Align Encoders",
+        new InstantCommand(() -> drive.zeroAbsoluteEncoders()).ignoringDisable(true));
+  }
+
+  private void configureVision() {
+    vision.addConsumer(drive::addVisionMeasurement);
+  }
+
+  private void configureLogging() {
     // Set up data receivers & replay source
     switch (Constants.currentMode) {
       case REAL: // Running on a real robot
@@ -92,94 +169,30 @@ public class Robot extends LoggedRobot {
 
     // Start AdvantageKit logger
     Logger.start();
-
-    configureControlPanelBindings();
-    configureAutoOptions();
-
-    Vision.getInstance().addConsumer(Drive.getInstance()::addVisionMeasurement);
-
-    SmartDashboard.putData(
-        "Align Encoders",
-        new InstantCommand(() -> Drive.getInstance().zeroAbsoluteEncoders()).ignoringDisable(true));
   }
 
-  /** This function is called periodically during all modes. */
-  @Override
-  public void robotPeriodic() {
-    // Optionally switch the thread to high priority to improve loop
-    // timing (see the template project documentation for details)
-    // Threads.setCurrentThreadPriority(true, 99);
-
-    // Runs the Scheduler. This is responsible for polling buttons, adding
-    // newly-scheduled commands, running already-scheduled commands, removing
-    // finished or interrupted commands, and running subsystem periodic() methods.
-    // This must be called from the robot's periodic block in order for anything in
-    // the Command-based framework to work.
-    CommandScheduler.getInstance().run();
-    SmartDashboard.putData(CommandScheduler.getInstance());
-    SmartDashboard.putData(Drive.getInstance());
-
-    // Return to non-RT thread priority (do not modify the first argument)
-    // Threads.setCurrentThreadPriority(false, 10);
+  private void configureMetadata() {
+    // Record metadata
+    Logger.recordMetadata("ProjectName", BuildConstants.MAVEN_NAME);
+    Logger.recordMetadata("BuildDate", BuildConstants.BUILD_DATE);
+    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    Logger.recordMetadata("GitDate", BuildConstants.GIT_DATE);
+    Logger.recordMetadata("GitBranch", BuildConstants.GIT_BRANCH);
+    switch (BuildConstants.DIRTY) {
+      case 0:
+        Logger.recordMetadata("GitDirty", "All changes committed");
+        break;
+      case 1:
+        Logger.recordMetadata("GitDirty", "Uncomitted changes");
+        break;
+      default:
+        Logger.recordMetadata("GitDirty", "Unknown");
+        break;
+    }
   }
-
-  /** This function is called once when the robot is disabled. */
-  @Override
-  public void disabledInit() {}
-
-  /** This function is called periodically when disabled. */
-  @Override
-  public void disabledPeriodic() {
-    AllianceSelector.getInstance().disabledPeriodic();
-    AutoSelector.getInstance().disabledPeriodic();
-    ControllerSelector.getInstance().scan(false);
-  }
-
-  /** This function is called once when autonomous mode is enabled. */
-  @Override
-  public void autonomousInit() {
-    Drive.getInstance()
-        .setDefaultCommand(
-            Commands.runOnce(Drive.getInstance()::stop, Drive.getInstance()).withName("Stop"));
-    AutoSelector.getInstance().scheduleAuto();
-  }
-
-  /** This function is called periodically during autonomous. */
-  @Override
-  public void autonomousPeriodic() {}
-
-  /** This function is called once when teleop mode is enabled. */
-  @Override
-  public void teleopInit() {
-    AutoSelector.getInstance().cancelAuto();
-    ControllerSelector.getInstance().scan(true);
-  }
-
-  /** This function is called periodically during operator control. */
-  @Override
-  public void teleopPeriodic() {}
-
-  /** This function is called once when test mode is enabled. */
-  @Override
-  public void testInit() {
-    // Cancels all running commands at the start of test mode.
-    CommandScheduler.getInstance().cancelAll();
-  }
-
-  /** This function is called periodically during test mode. */
-  @Override
-  public void testPeriodic() {}
-
-  /** This function is called once when the robot is first started up. */
-  @Override
-  public void simulationInit() {}
-
-  /** This function is called periodically whilst in simulation. */
-  @Override
-  public void simulationPeriodic() {}
 
   private void configureControlPanelBindings() {
-    ControllerSelector.configure(
+    controllerSelector.configure(
         // ZORRO is always preferred as driver in REAL and SIM mode
         new ControllerConfig(
             ControllerFunction.DRIVER,
@@ -208,15 +221,14 @@ public class Robot extends LoggedRobot {
 
     // Drive in field-relative mode while switch E is up
     // Drive in robot-relative mode while switch E is down
-    Drive.getInstance()
-        .setDefaultCommand(
-            DriveCommands.joystickDrive(
-                Drive.getInstance(),
-                () -> -zorroDriver.getRightYAxis(),
-                () -> -zorroDriver.getRightXAxis(),
-                () -> -zorroDriver.getLeftXAxis(),
-                () -> zorroDriver.getHID().getEUp(),
-                AllianceSelector.getInstance()::fieldRotated));
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -zorroDriver.getRightYAxis(),
+            () -> -zorroDriver.getRightXAxis(),
+            () -> -zorroDriver.getLeftXAxis(),
+            () -> zorroDriver.getHID().getEUp(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when button G is pressed
     zorroDriver
@@ -224,19 +236,16 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        Drive.getInstance()
-                            .setPose(
-                                new Pose2d(
-                                    Drive.getInstance().getPose().getTranslation(),
-                                    Rotation2d.kZero)),
-                    Drive.getInstance())
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                    drive)
                 .ignoringDisable(true));
 
     // Drive 1m forward while button A is held
-    zorroDriver.AIn().whileTrue(PathCommands.advanceForward(Drive.getInstance(), Meters.of(1)));
+    zorroDriver.AIn().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
 
     // Switch to X pattern when button D is pressed
-    zorroDriver.DIn().onTrue(Commands.runOnce(Drive.getInstance()::stopWithX, Drive.getInstance()));
+    zorroDriver.DIn().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
   public void bindXboxDriver(int port) {
@@ -244,15 +253,14 @@ public class Robot extends LoggedRobot {
 
     // Drive in field-relative mode while left bumper is released
     // Drive in robot-relative mode while left bumper is pressed
-    Drive.getInstance()
-        .setDefaultCommand(
-            DriveCommands.joystickDrive(
-                Drive.getInstance(),
-                () -> -xboxDriver.getLeftY(),
-                () -> -xboxDriver.getLeftX(),
-                () -> -xboxDriver.getRightX(),
-                () -> !xboxDriver.getHID().getLeftBumperButton(),
-                AllianceSelector.getInstance()::fieldRotated));
+    drive.setDefaultCommand(
+        DriveCommands.joystickDrive(
+            drive,
+            () -> -xboxDriver.getLeftY(),
+            () -> -xboxDriver.getLeftX(),
+            () -> -xboxDriver.getRightX(),
+            () -> !xboxDriver.getHID().getLeftBumperButton(),
+            allianceSelector::fieldRotated));
 
     // Reset gyro to 0° when B button is pressed
     xboxDriver
@@ -260,16 +268,13 @@ public class Robot extends LoggedRobot {
         .onTrue(
             Commands.runOnce(
                     () ->
-                        Drive.getInstance()
-                            .setPose(
-                                new Pose2d(
-                                    Drive.getInstance().getPose().getTranslation(),
-                                    Rotation2d.kZero)),
-                    Drive.getInstance())
+                        drive.setPose(
+                            new Pose2d(drive.getPose().getTranslation(), Rotation2d.kZero)),
+                    drive)
                 .ignoringDisable(true));
 
     // Drive 1m forward while A button is held
-    xboxDriver.a().whileTrue(PathCommands.advanceForward(Drive.getInstance(), Meters.of(1)));
+    xboxDriver.a().whileTrue(PathCommands.advanceForward(drive, Meters.of(1)));
 
     // Align with pose, approaching in correct orientation from 1 m away
     // xboxDriver
@@ -285,7 +290,7 @@ public class Robot extends LoggedRobot {
     //     PathCommands.dockToTargetPoint(drive, new Translation2d(8.2296, 4.1148), Meters.of(2)));
 
     // Switch to X pattern when X button is pressed
-    xboxDriver.x().onTrue(Commands.runOnce(Drive.getInstance()::stopWithX, Drive.getInstance()));
+    xboxDriver.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
   }
 
   public void bindXboxOperator(int port) {
@@ -293,11 +298,8 @@ public class Robot extends LoggedRobot {
   }
 
   public void configureAutoOptions() {
-    AutoSelector.getInstance()
-        .addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(Drive.getInstance())));
-    AutoSelector.getInstance()
-        .addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(Drive.getInstance())));
-    AutoSelector.getInstance()
-        .addAuto(new AutoOption(Alliance.Blue, 3, new B_Path(Drive.getInstance())));
+    autoSelector.addAuto(new AutoOption(Alliance.Red, 1, new R_MoveStraight(drive)));
+    autoSelector.addAuto(new AutoOption(Alliance.Red, 2, new R_MoveAndRotate(drive)));
+    autoSelector.addAuto(new AutoOption(Alliance.Blue, 3, new B_Path(drive)));
   }
 }
