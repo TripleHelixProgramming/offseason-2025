@@ -48,8 +48,9 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.subsystems.drive.io.GyroIO;
 import frc.robot.subsystems.drive.io.GyroBoronIO;
+import frc.robot.subsystems.drive.io.GyroIO;
+import frc.robot.subsystems.drive.io.GyroIOInputsAutoLogged;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -102,10 +103,11 @@ public class Drive extends SubsystemBase {
   }
 
   private Drive() {
-    this.gyroIO = switch(Constants.currentMode) {
-      case REAL -> new GyroBoronIO();
-      default -> new GyroIO() {};
-    };
+    this.gyroIO =
+        switch (Constants.currentMode) {
+          case REAL -> new GyroBoronIO();
+          default -> new GyroIO() {};
+        };
 
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);

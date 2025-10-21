@@ -1,7 +1,11 @@
 package frc.robot.subsystems.drive;
 
-import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.subsystems.drive.DriveConstants.zeroRotationKey;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
+import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.swerve.SwerveModuleConstantsFactory;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -12,15 +16,9 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.Preferences;
 import frc.robot.Constants;
 import frc.robot.subsystems.drive.io.ModuleIO;
+import frc.robot.subsystems.drive.io.ModuleIOInputsAutoLogged;
 import frc.robot.subsystems.drive.io.ModuleSimIO;
 import frc.robot.subsystems.drive.io.ModuleTalonFXIO;
-
-import com.ctre.phoenix6.configs.CANcoderConfiguration;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
-
-import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.drive.DriveConstants.zeroRotationKey;
-
 import org.littletonrobotics.junction.Logger;
 
 /**
@@ -29,7 +27,6 @@ import org.littletonrobotics.junction.Logger;
  * manages the module's I/O and provides methods for controlling the module.
  */
 public enum SwerveModule {
-
   FrontLeft(
       build()
           .driveCanId(28)
@@ -108,8 +105,8 @@ public enum SwerveModule {
   private final Alert turnDisconnectedAlert;
 
   /**
-   * Array of swerve module positions for odometry, updated each periodic cycle.
-   * This array holds historical position data for accurate odometry calculations.
+   * Array of swerve module positions for odometry, updated each periodic cycle. This array holds
+   * historical position data for accurate odometry calculations.
    */
   private SwerveModulePosition[] odometryPositions = {};
 
@@ -129,54 +126,54 @@ public enum SwerveModule {
     this.turnInverted = builder.turnInverted;
     this.turnEncoderInverted = builder.turnEncoderInverted;
 
-    var constantCreator =  new SwerveModuleConstantsFactory<TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
-        .withDriveMotorGearRatio(DriveConstants.driveMotorReduction)
-        .withSteerMotorGearRatio(DriveConstants.turnMotorReduction)
-        .withCouplingGearRatio(DriveConstants.kCoupleRatio)
-        .withWheelRadius(DriveConstants.wheelRadius)
-        .withSteerMotorGains(DriveConstants.steerGains)
-        .withDriveMotorGains(DriveConstants.driveGains)
-        .withSteerMotorClosedLoopOutput(DriveConstants.kSteerClosedLoopOutput)
-        .withDriveMotorClosedLoopOutput(DriveConstants.kDriveClosedLoopOutput)
-        .withSlipCurrent(DriveConstants.kSlipCurrent)
-        .withSpeedAt12Volts(DriveConstants.maxDriveSpeed)
-        .withDriveMotorType(DriveConstants.kDriveMotorType)
-        .withSteerMotorType(DriveConstants.kSteerMotorType)
-        .withFeedbackSource(DriveConstants.kSteerFeedbackType)
-        .withDriveMotorInitialConfigs(DriveConstants.driveInitialConfigs)
-        .withSteerMotorInitialConfigs(DriveConstants.steerInitialConfigs)
-        .withSteerInertia(DriveConstants.kSteerInertia)
-        .withDriveInertia(DriveConstants.kDriveInertia)
-        .withSteerFrictionVoltage(DriveConstants.kSteerFrictionVoltage)
-        .withDriveFrictionVoltage(DriveConstants.kDriveFrictionVoltage);
+    var constantCreator =
+        new SwerveModuleConstantsFactory<
+                TalonFXConfiguration, TalonFXConfiguration, CANcoderConfiguration>()
+            .withDriveMotorGearRatio(DriveConstants.driveMotorReduction)
+            .withSteerMotorGearRatio(DriveConstants.turnMotorReduction)
+            .withCouplingGearRatio(DriveConstants.kCoupleRatio)
+            .withWheelRadius(DriveConstants.wheelRadius)
+            .withSteerMotorGains(DriveConstants.steerGains)
+            .withDriveMotorGains(DriveConstants.driveGains)
+            .withSteerMotorClosedLoopOutput(DriveConstants.kSteerClosedLoopOutput)
+            .withDriveMotorClosedLoopOutput(DriveConstants.kDriveClosedLoopOutput)
+            .withSlipCurrent(DriveConstants.kSlipCurrent)
+            .withSpeedAt12Volts(DriveConstants.maxDriveSpeed)
+            .withDriveMotorType(DriveConstants.kDriveMotorType)
+            .withSteerMotorType(DriveConstants.kSteerMotorType)
+            .withFeedbackSource(DriveConstants.kSteerFeedbackType)
+            .withDriveMotorInitialConfigs(DriveConstants.driveInitialConfigs)
+            .withSteerMotorInitialConfigs(DriveConstants.steerInitialConfigs)
+            .withSteerInertia(DriveConstants.kSteerInertia)
+            .withDriveInertia(DriveConstants.kDriveInertia)
+            .withSteerFrictionVoltage(DriveConstants.kSteerFrictionVoltage)
+            .withDriveFrictionVoltage(DriveConstants.kDriveFrictionVoltage);
 
     // Create the Phoenix SwerveModuleConstants using the builder's parameters
-    var constants = constantCreator.createModuleConstants(
-      turnCanId,
-      driveCanId,
-      turnAbsoluteEncoderCanId,
-      encoderOffset,
-      locationX,
-      locationY,
-      driveInverted,
-      turnInverted,
-      turnEncoderInverted);
+    var constants =
+        constantCreator.createModuleConstants(
+            turnCanId,
+            driveCanId,
+            turnAbsoluteEncoderCanId,
+            encoderOffset,
+            locationX,
+            locationY,
+            driveInverted,
+            turnInverted,
+            turnEncoderInverted);
 
     // Initialize the appropriate ModuleIO based on the current robot mode
-    this.io = switch(Constants.currentMode) {
-      case REAL -> new ModuleTalonFXIO(constants);
-      case SIM -> new ModuleSimIO(constants);
-      default -> new ModuleIO() {};
-    };
+    this.io =
+        switch (Constants.currentMode) {
+          case REAL -> new ModuleTalonFXIO(constants);
+          case SIM -> new ModuleSimIO(constants);
+          default -> new ModuleIO() {};
+        };
 
     driveDisconnectedAlert =
-        new Alert(
-            "Disconnected drive motor on module " + name() + ".",
-            AlertType.kError);
+        new Alert("Disconnected drive motor on module " + name() + ".", AlertType.kError);
     turnDisconnectedAlert =
-        new Alert(
-            "Disconnected turn motor on module " + name() + ".", 
-            AlertType.kError);
+        new Alert("Disconnected turn motor on module " + name() + ".", AlertType.kError);
 
     // Initialize Preferences for storing and retrieving the turn zero position.
     // This allows the robot to remember the calibrated zero position across reboots.
@@ -190,9 +187,7 @@ public enum SwerveModule {
     io.setTurnZero(turnZeroFromPreferences);
   }
 
-  /**
-   * Periodically updates the module's inputs, processes odometry data, and updates alerts.
-   */
+  /** Periodically updates the module's inputs, processes odometry data, and updates alerts. */
   public void periodic() {
     io.updateInputs(inputs);
     Logger.processInputs("Drive/Module." + name(), inputs);
@@ -201,7 +196,8 @@ public enum SwerveModule {
     int sampleCount = inputs.odometryTimestamps.length; // All signals are sampled together
     odometryPositions = new SwerveModulePosition[sampleCount];
     for (int i = 0; i < sampleCount; i++) {
-      double positionMeters = inputs.odometryDrivePositionsRad[i] * DriveConstants.wheelRadius.in(Meters);
+      double positionMeters =
+          inputs.odometryDrivePositionsRad[i] * DriveConstants.wheelRadius.in(Meters);
       Rotation2d angle = inputs.odometryTurnPositions[i];
       odometryPositions[i] = new SwerveModulePosition(positionMeters, angle);
     }
@@ -212,8 +208,9 @@ public enum SwerveModule {
   }
 
   /**
-   * Runs the module with the specified setpoint state.
-   * The state is optimized internally to prevent unnecessary module rotation.
+   * Runs the module with the specified setpoint state. The state is optimized internally to prevent
+   * unnecessary module rotation.
+   *
    * @param state The desired {@link SwerveModuleState} for the module.
    */
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
@@ -228,8 +225,9 @@ public enum SwerveModule {
   }
 
   /**
-   * Runs the drive motor with a specified open-loop output while keeping the turn motor at zero degrees.
-   * This is typically used for characterization.
+   * Runs the drive motor with a specified open-loop output while keeping the turn motor at zero
+   * degrees. This is typically used for characterization.
+   *
    * @param output The open-loop output (e.g., voltage or percent output) for the drive motor.
    */
   /** Runs the module with the specified output while controlling to zero degrees. */
@@ -239,9 +237,7 @@ public enum SwerveModule {
   }
 
   /** Disables all outputs to motors. */
-  /**
-   * Stops both the drive and turn motors by setting their open-loop outputs to zero.
-   */
+  /** Stops both the drive and turn motors by setting their open-loop outputs to zero. */
   public void stop() {
     io.setDriveOpenLoop(0.0);
     io.setTurnOpenLoop(0.0);
@@ -252,9 +248,7 @@ public enum SwerveModule {
     return inputs.turnPosition;
   }
 
-  /**
-   * Returns the current drive position of the module in meters.
-   */
+  /** Returns the current drive position of the module in meters. */
   /** Returns the current drive position of the module in meters. */
   public double getPositionMeters() {
     return inputs.drivePositionRad * DriveConstants.wheelRadius.in(Meters);
@@ -265,9 +259,7 @@ public enum SwerveModule {
     return inputs.driveVelocityRadPerSec * DriveConstants.wheelRadius.in(Meters);
   }
 
-  /**
-   * Returns the current {@link SwerveModulePosition} of the module.
-   */
+  /** Returns the current {@link SwerveModulePosition} of the module. */
   /** Returns the module position (turn angle and drive position). */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(getPositionMeters(), getAngle());
@@ -281,6 +273,7 @@ public enum SwerveModule {
   /**
    * Returns an array of {@link SwerveModulePosition} objects representing the module's positions
    * recorded during the current periodic cycle for odometry.
+   *
    * @return An array of {@link SwerveModulePosition} for odometry.
    */
   /** Returns the module positions received this cycle. */
@@ -289,8 +282,9 @@ public enum SwerveModule {
   }
 
   /**
-   * Returns an array of timestamps (in seconds) corresponding to the odometry samples
-   * received during the current periodic cycle.
+   * Returns an array of timestamps (in seconds) corresponding to the odometry samples received
+   * during the current periodic cycle.
+   *
    * @return An array of timestamps for odometry samples.
    */
   /** Returns the timestamps of the samples received this cycle. */
@@ -300,6 +294,7 @@ public enum SwerveModule {
 
   /**
    * Returns the drive motor's position in radians, used for wheel radius characterization.
+   *
    * @return The drive motor's position in radians.
    */
   /** Returns the module position in radians. */
@@ -308,7 +303,9 @@ public enum SwerveModule {
   }
 
   /**
-   * Returns the drive motor's velocity in radians per second, used for feedforward characterization.
+   * Returns the drive motor's velocity in radians per second, used for feedforward
+   * characterization.
+   *
    * @return The drive motor's velocity in radians per second.
    */
   /** Returns the module velocity in rad/sec. */
@@ -317,8 +314,8 @@ public enum SwerveModule {
   }
 
   /**
-   * Sets the zero position of the turn absolute encoder to the current rotation of the module.
-   * This value is stored in {@link Preferences} for persistence.
+   * Sets the zero position of the turn absolute encoder to the current rotation of the module. This
+   * value is stored in {@link Preferences} for persistence.
    */
   /** Sets the zero position of the turn axis to the current rotation */
   public void setTurnZero() {
@@ -329,6 +326,7 @@ public enum SwerveModule {
 
   /**
    * Creates a new {@link Builder} instance for constructing a {@link SwerveModule}.
+   *
    * @return A new {@link Builder}.
    */
   private static Builder build() {
@@ -336,8 +334,8 @@ public enum SwerveModule {
   }
 
   /**
-   * A fluent builder class for constructing {@link SwerveModule} instances.
-   * This allows for more readable and organized module definitions.
+   * A fluent builder class for constructing {@link SwerveModule} instances. This allows for more
+   * readable and organized module definitions.
    */
   private static class Builder {
     private int driveCanId;
@@ -404,6 +402,4 @@ public enum SwerveModule {
       return this;
     }
   }
-
-
 }

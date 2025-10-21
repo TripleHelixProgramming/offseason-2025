@@ -45,7 +45,7 @@ import edu.wpi.first.units.measure.LinearAcceleration;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
-import edu.wpi.first.units.measure.Voltage; 
+import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.MotorConstants;
 
 public class DriveConstants {
@@ -60,7 +60,7 @@ public class DriveConstants {
     new Translation2d(wheelBase.div(-2.0), trackWidth.div(2.0)),
     new Translation2d(wheelBase.div(-2.0), trackWidth.div(-2.0))
   };
-  
+
   public static final Distance driveBaseRadius =
       Meters.of(Translation2d.kZero.getDistance(moduleTranslations[0]));
 
@@ -142,19 +142,15 @@ public class DriveConstants {
 
   // The closed-loop output type to use for the steer motors;
   // This affects the PID/FF gains for the steer motors
-  static final ClosedLoopOutputType kSteerClosedLoopOutput =
-      ClosedLoopOutputType.TorqueCurrentFOC;
+  static final ClosedLoopOutputType kSteerClosedLoopOutput = ClosedLoopOutputType.TorqueCurrentFOC;
   // The closed-loop output type to use for the drive motors;
   // This affects the PID/FF gains for the drive motors
-  static final ClosedLoopOutputType kDriveClosedLoopOutput =
-      ClosedLoopOutputType.TorqueCurrentFOC;
+  static final ClosedLoopOutputType kDriveClosedLoopOutput = ClosedLoopOutputType.TorqueCurrentFOC;
 
   // The type of motor used for the drive motor
-  static final DriveMotorArrangement kDriveMotorType =
-      DriveMotorArrangement.TalonFX_Integrated;
+  static final DriveMotorArrangement kDriveMotorType = DriveMotorArrangement.TalonFX_Integrated;
   // The type of motor used for the drive motor
-  static final SteerMotorArrangement kSteerMotorType =
-      SteerMotorArrangement.TalonFX_Integrated;
+  static final SteerMotorArrangement kSteerMotorType = SteerMotorArrangement.TalonFX_Integrated;
 
   // The remote sensor feedback type to use for the steer motors;
   static final SteerFeedbackType kSteerFeedbackType = SteerFeedbackType.FusedCANcoder;
