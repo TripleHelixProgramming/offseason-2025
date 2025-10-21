@@ -169,11 +169,12 @@ public enum Camera {
     this.stdDevFactor = builder.stdDevFactor;
     this.inputs = new VisionIOInputsAutoLogged();
 
-    this.io = switch (Constants.currentMode) {
-      case REAL -> new PhotonVisionIO(deviceName, robotToCamera);
-      case SIM -> new PhotonVisionSimIO(deviceName, robotToCamera, () -> Robot.drive.getPose());
-      default -> new VisionIO() {};
-    };
+    this.io =
+        switch (Constants.currentMode) {
+          case REAL -> new PhotonVisionIO(deviceName, robotToCamera);
+          case SIM -> new PhotonVisionSimIO(deviceName, robotToCamera, () -> Robot.drive.getPose());
+          default -> new VisionIO() {};
+        };
   }
 
   /** Updates the internal {@link #inputs} object with the latest data from this camera. */
