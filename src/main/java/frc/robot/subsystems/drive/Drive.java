@@ -48,7 +48,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.Robot;
+import frc.robot.subsystems.drive.io.GyroIO;
+import frc.robot.subsystems.drive.io.GyroBoronIO;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -56,26 +57,27 @@ import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
 public class Drive extends SubsystemBase {
-  static final double ODOMETRY_FREQUENCY =
+  public static final double ODOMETRY_FREQUENCY =
       new CANBus(DrivetrainConstants.CANBusName).isNetworkFD() ? 250.0 : 100.0;
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
   private final GyroIOInputsAutoLogged gyroInputs = new GyroIOInputsAutoLogged();
-  private final Module[] modules = new Module[4]; // FL, FR, BL, BR
+  private final SwerveModule[] modules = SwerveModule.values();
   private final SysIdRoutine sysId;
   private final Alert gyroDisconnectedAlert =
       new Alert("Disconnected gyro, using kinematics as fallback.", AlertType.kError);
 
   private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(moduleTranslations);
   private Rotation2d rawGyroRotation = Rotation2d.kZero;
-  private SwerveModulePosition[] lastModulePositions = // For delta tracking
-      new SwerveModulePosition[] {
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition(),
-        new SwerveModulePosition()
-      };
+
+  // For delta tracking
+  private SwerveModulePosition[] lastModulePositions = {
+    new SwerveModulePosition(),
+    new SwerveModulePosition(),
+    new SwerveModulePosition(),
+    new SwerveModulePosition()
+  };
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
   private Boolean firstVisionEstimate = true;
@@ -89,64 +91,27 @@ public class Drive extends SubsystemBase {
 
   /** Initializes the Drive subsystem singleton. */
   public static void initialize() {
-    if (instance == null) {
-      getInstance();
-    }
+    getInstance();
   }
 
   public static Drive getInstance() {
     if (instance == null) {
-      switch (Constants.currentMode) {
-        case REAL:
-          instance =
-              new Drive(
-                  new GyroIOBoron(),
-                  new ModuleIOTalonFX(FrontLeft),
-                  new ModuleIOTalonFX(FrontRight),
-                  new ModuleIOTalonFX(BackLeft),
-                  new ModuleIOTalonFX(BackRight));
-          break;
-        case SIM:
-          instance =
-              new Drive(
-                  new GyroIO() {},
-                  new ModuleIOSim(FrontLeft),
-                  new ModuleIOSim(FrontRight),
-                  new ModuleIOSim(BackLeft),
-                  new ModuleIOSim(BackRight));
-          break;
-        case REPLAY:
-        default:
-          instance =
-              new Drive(
-                  new GyroIO() {},
-                  new ModuleIO() {},
-                  new ModuleIO() {},
-                  new ModuleIO() {},
-                  new ModuleIO() {});
-          break;
-      }
+      instance = new Drive();
     }
     return instance;
   }
 
-  private Drive(
-      GyroIO gyroIO,
-      ModuleIO flModuleIO,
-      ModuleIO frModuleIO,
-      ModuleIO blModuleIO,
-      ModuleIO brModuleIO) {
-    this.gyroIO = gyroIO;
-    modules[0] = new Module(flModuleIO, 0);
-    modules[1] = new Module(frModuleIO, 1);
-    modules[2] = new Module(blModuleIO, 2);
-    modules[3] = new Module(brModuleIO, 3);
+  private Drive() {
+    this.gyroIO = switch(Constants.currentMode) {
+      case REAL -> new GyroBoronIO();
+      default -> new GyroIO() {};
+    };
 
     // Usage reporting for swerve template
     HAL.report(tResourceType.kResourceType_RobotDrive, tInstances.kRobotDriveSwerve_AdvantageKit);
 
     // Start odometry thread
-    Robot.odometryThread.start();
+    PhoenixOdometryThread.getInstance().start();
 
     // Configure AutoBuilder for PathPlanner
     AutoBuilder.configure(

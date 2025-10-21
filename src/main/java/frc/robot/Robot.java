@@ -24,7 +24,6 @@ import frc.robot.auto.R_MoveStraight;
 import frc.robot.commands.DriveCommands;
 import frc.robot.commands.PathCommands;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.PhoenixOdometryThread;
 import frc.robot.subsystems.vision.Vision;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
@@ -48,7 +47,6 @@ public class Robot extends LoggedRobot {
   public static final AllianceSelector allianceSelector = AllianceSelector.getInstance();
   public static final AutoSelector autoSelector = AutoSelector.getInstance();
   public static final ControllerSelector controllerSelector = ControllerSelector.getInstance();
-  public static final PhoenixOdometryThread odometryThread = PhoenixOdometryThread.getInstance();
 
   public Robot() {
     super(0.02);

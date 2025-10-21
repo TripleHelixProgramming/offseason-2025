@@ -24,7 +24,9 @@ import edu.wpi.first.wpilibj.RobotBase;
  * (log replay from a file).
  */
 public final class Constants {
+  // TODO: Is this necessary?
   public static final Mode simMode = Mode.SIM;
+  
   public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
   public static enum Mode {
@@ -42,25 +44,18 @@ public final class Constants {
     public static final double kNominalVoltage = 12.0;
   }
 
-  public static final class MotorConstants {
-    public static final class NEOConstants {
-      public static final AngularVelocity kFreeSpeed = RPM.of(5676);
-      public static final int kDefaultSupplyCurrentLimit = 60;
-    }
+  public enum MotorConstants {
+    NEO(RPM.of(5676), 60),
+    NEO_550(RPM.of(11000), 20),
+    NEO_VORTEX(RPM.of(6784), 60),
+    KRAKEN_X60(RPM.of(6000), 60);
 
-    public static final class NEO550Constants {
-      public static final AngularVelocity kFreeSpeed = RPM.of(11000);
-      public static final int kDefaultSupplyCurrentLimit = 20;
-    }
+    public final AngularVelocity freeSpeed;
+    public final int defaultSupplyCurrentLimit;
 
-    public static final class NEOVortexConstants {
-      public static final AngularVelocity kFreeSpeed = RPM.of(6784);
-      public static final int kDefaultSupplyCurrentLimit = 60;
-    }
-
-    public static final class KrakenX60Constants {
-      public static final AngularVelocity kFreeSpeed = RPM.of(6000);
-      public static final int kDefaultSupplyCurrentLimit = 60;
+    MotorConstants(AngularVelocity freeSpeed, int supplyCurrentLimit) {
+      this.freeSpeed = freeSpeed;
+      this.defaultSupplyCurrentLimit = supplyCurrentLimit;
     }
   }
 
