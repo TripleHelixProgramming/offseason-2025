@@ -27,7 +27,7 @@ import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -38,10 +38,10 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
-  LinearFilter ambiguityTestPassRate = LinearFilter.movingAverage(20);
-  LinearFilter flatPoseTestPassRate = LinearFilter.movingAverage(20);
-  LinearFilter withinBoundsTestPassRate = LinearFilter.movingAverage(20);
-  LinearFilter moreThanZeroTagsTestPassRate = LinearFilter.movingAverage(20);
+  // LinearFilter ambiguityTestPassRate = LinearFilter.movingAverage(20);
+  // LinearFilter flatPoseTestPassRate = LinearFilter.movingAverage(20);
+  // LinearFilter withinBoundsTestPassRate = LinearFilter.movingAverage(20);
+  // LinearFilter moreThanZeroTagsTestPassRate = LinearFilter.movingAverage(20);
 
   LinearFilter[] cameraPassRate = {
     LinearFilter.movingAverage(20),
@@ -93,7 +93,7 @@ public class Vision extends SubsystemBase {
     var allRobotPosesRejected = new ArrayList<Pose3d>();
 
     // List to store acceptable observations
-    var acceptableObservations = new ArrayList<ObservationWithCameraIndex>();
+    var observations = new ArrayList<TestedObservation>();
 
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -116,27 +116,21 @@ public class Vision extends SubsystemBase {
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
-        // Check whether to reject pose
-        boolean acceptPose =
-            moreThanZeroTags(observation)
-                && isUnambiguous(observation)
-                && isPoseFlat(observation)
-                && isWithinBoundaries(observation);
+        EnumMap<VisionTest, Boolean> testResults = new EnumMap<>(VisionTest.class);
 
-        // Pose must be within the max possible travel distance
-        // TODO: Disable this filter during initial robot setup
-        // || observation
-        //         .pose()
-        //         .toPose2d()
-        //         .getTranslation()
-        //         .getDistance(poseSupplier.get().getTranslation())
-        //     > maxTravelDistance.in(Meters);
+        testResults.put(VisionTest.moreThanZeroTags, VisionTest.moreThanZeroTags.test(observation));
+        testResults.put(VisionTest.unambiguous, VisionTest.unambiguous.test(observation));
+        testResults.put(VisionTest.flatOrientation, VisionTest.flatOrientation.test(observation));
+        testResults.put(VisionTest.withinBoundaries, VisionTest.withinBoundaries.test(observation));
+
+        observations.add(new TestedObservation(observation, cameraIndex, testResults));
+
+        boolean acceptPose = testResults.values().stream().allMatch(result -> result);
 
         // Add pose to log
         robotPoses.add(observation.pose());
         if (acceptPose) {
           robotPosesAccepted.add(observation.pose());
-          acceptableObservations.add(new ObservationWithCameraIndex(observation, cameraIndex));
         } else {
           robotPosesRejected.add(observation.pose());
         }
@@ -166,10 +160,14 @@ public class Vision extends SubsystemBase {
       allRobotPosesRejected.addAll(robotPosesRejected);
     }
 
-    // Sort the list of acceptable observations by timestamp
-    acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
+    // Remove unacceptable observations
+    observations.removeIf(o -> !o.testResults.values().stream().allMatch(result -> result));
 
-    for (var o : acceptableObservations) {
+    // Sort the list of acceptable observations by timestamp
+    observations.sort(
+        (lhs, rhs) -> (int) Math.signum(lhs.observation.timestamp() - rhs.observation.timestamp()));
+
+    for (var o : observations) {
       // Calculate standard deviations
       double stdDevFactor =
           (o.observation.averageTagDistance() * o.observation.averageTagDistance())
@@ -200,12 +198,13 @@ public class Vision extends SubsystemBase {
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
 
-    Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate", ambiguityTestPassRate.lastValue());
-    Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate.lastValue());
-    Logger.recordOutput(
-        "Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate.lastValue());
-    Logger.recordOutput(
-        "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate.lastValue());
+    // Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate",
+    // ambiguityTestPassRate.lastValue());
+    // Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate.lastValue());
+    // Logger.recordOutput(
+    //     "Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate.lastValue());
+    // Logger.recordOutput(
+    //     "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate.lastValue());
   }
 
   @FunctionalInterface
@@ -217,7 +216,8 @@ public class Vision extends SubsystemBase {
   }
 
   // Associate observations with their camera
-  public static record ObservationWithCameraIndex(PoseObservation observation, int cameraIndex) {}
+  public static record TestedObservation(
+      PoseObservation observation, int cameraIndex, EnumMap<VisionTest, Boolean> testResults) {}
 
   // Caching for AprilTag layout
   public static AprilTagFieldLayout cachedLayout = null;
@@ -241,66 +241,79 @@ public class Vision extends SubsystemBase {
     return cachedLayout;
   }
 
-  /**
-   * Rejects high-ambiguity observations of a single tag
-   *
-   * @param observation The pose observation to check
-   * @return Whether the observation has low ambiguity
-   */
-  public Boolean isUnambiguous(PoseObservation observation) {
-    boolean pass = true;
-    if (observation.tagCount() == 1) {
-      pass = observation.ambiguity() < maxAmbiguity;
-    }
+  public enum VisionTest {
+    unambiguous {
+      /**
+       * Rejects high-ambiguity observations of a single tag
+       *
+       * @param observation The pose observation to check
+       * @return Whether the observation has low ambiguity
+       */
+      @Override
+      public boolean test(PoseObservation observation) {
+        boolean pass = true;
+        if (observation.tagCount() == 1) {
+          pass = observation.ambiguity() < maxAmbiguity;
+        }
 
-    ambiguityTestPassRate.calculate(pass ? 1.0 : 0.0);
-    return pass;
-  }
+        // ambiguityTestPassRate.calculate(pass ? 1.0 : 0.0);
+        return pass;
+      }
+    },
+    flatOrientation {
+      /**
+       * We assume that the robot is constrained to an orientation that is flat on the field.
+       * Rejects poses that exceed pitch, roll, and elevation tolerances.
+       *
+       * @param observation The pose observation to check
+       * @return Whether the observation's pose is flat on the floor
+       */
+      @Override
+      public boolean test(PoseObservation observation) {
+        boolean pass =
+            Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
+                && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
+                && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
 
-  /**
-   * We assume that the robot is constrained to an orientation that is flat on the field. Rejects
-   * poses that exceed pitch, roll, and elevation tolerances.
-   *
-   * @param observation The pose observation to check
-   * @return Whether the observation's pose is flat on the floor
-   */
-  public Boolean isPoseFlat(PoseObservation observation) {
-    boolean pass =
-        Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
-            && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
-            && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
+        // flatPoseTestPassRate.calculate(pass ? 1.0 : 0.0);
+        return pass;
+      }
+    },
+    withinBoundaries {
+      /**
+       * Rejects poses that, when projected to the floor, lie outside of the field boundaries
+       *
+       * @param observation The pose observation to check
+       * @return Whether the observation is within the field boundaries
+       */
+      @Override
+      public boolean test(PoseObservation observation) {
+        boolean pass =
+            observation.pose().getX() > 0.0
+                && observation.pose().getX() < getAprilTagLayout().getFieldLength()
+                && observation.pose().getY() > 0.0
+                && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
 
-    flatPoseTestPassRate.calculate(pass ? 1.0 : 0.0);
-    return pass;
-  }
+        // withinBoundsTestPassRate.calculate(pass ? 1.0 : 0.0);
+        return pass;
+      }
+    },
+    moreThanZeroTags {
+      /**
+       * Rejects observations where no tags were detected
+       *
+       * @param observation The pose observation to check
+       * @return Whether the observation has more than zero tags
+       */
+      @Override
+      public boolean test(PoseObservation observation) {
+        boolean pass = observation.tagCount() > 0;
 
-  /**
-   * Rejects poses that, when projected to the floor, lie outside of the field boundaries
-   *
-   * @param observation The pose observation to check
-   * @return Whether the observation is within the field boundaries
-   */
-  public Boolean isWithinBoundaries(PoseObservation observation) {
-    boolean pass =
-        observation.pose().getX() > 0.0
-            && observation.pose().getX() < getAprilTagLayout().getFieldLength()
-            && observation.pose().getY() > 0.0
-            && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
+        // moreThanZeroTagsTestPassRate.calculate(pass ? 1.0 : 0.0);
+        return pass;
+      }
+    };
 
-    withinBoundsTestPassRate.calculate(pass ? 1.0 : 0.0);
-    return pass;
-  }
-
-  /**
-   * Rejects observations where no tags were detected
-   *
-   * @param observation The pose observation to check
-   * @return Whether the observation has more than zero tags
-   */
-  public Boolean moreThanZeroTags(PoseObservation observation) {
-    boolean pass = observation.tagCount() > 0;
-
-    moreThanZeroTagsTestPassRate.calculate(pass ? 1.0 : 0.0);
-    return pass;
+    public abstract boolean test(PoseObservation observation);
   }
 }
