@@ -118,27 +118,19 @@ public class Vision extends SubsystemBase {
       for (var observation : inputs[cameraIndex].poseObservations) {
         // Check whether to reject pose
         boolean acceptPose =
-            // Must have observed at least one tag
             moreThanZeroTags(observation)
-
-                // Any single-tag observation must have low ambiguity
-                && hasLowAmbiguity(observation)
-
-                // Pose must be flat on the floor
+                && isUnambiguous(observation)
                 && isPoseFlat(observation)
+                && isWithinBoundaries(observation);
 
-                // Pose must be within the field boundaries
-                && isWithinBoundaries(observation)
-
-            // Pose must be within the max possible travel distance
-            // TODO: Disable this filter during initial robot setup
-            // || observation
-            //         .pose()
-            //         .toPose2d()
-            //         .getTranslation()
-            //         .getDistance(poseSupplier.get().getTranslation())
-            //     > maxTravelDistance.in(Meters);
-            ;
+        // Pose must be within the max possible travel distance
+        // TODO: Disable this filter during initial robot setup
+        // || observation
+        //         .pose()
+        //         .toPose2d()
+        //         .getTranslation()
+        //         .getDistance(poseSupplier.get().getTranslation())
+        //     > maxTravelDistance.in(Meters);
 
         // Add pose to log
         robotPoses.add(observation.pose());
@@ -177,7 +169,6 @@ public class Vision extends SubsystemBase {
     // Sort the list of acceptable observations by timestamp
     acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
 
-    // Send sorted vision observations to the pose estimator
     for (var o : acceptableObservations) {
       // Calculate standard deviations
       double stdDevFactor =
@@ -194,7 +185,7 @@ public class Vision extends SubsystemBase {
         angularStdDev *= cameraStdDevFactors[o.cameraIndex];
       }
 
-      // Send to consumer
+      // Send acceptable vision observations to the pose estimator with their stddevs
       consumer.accept(
           o.observation.pose().toPose2d(),
           o.observation.timestamp(),
@@ -250,7 +241,13 @@ public class Vision extends SubsystemBase {
     return cachedLayout;
   }
 
-  public Boolean hasLowAmbiguity(PoseObservation observation) {
+  /**
+   * Rejects high-ambiguity observations of a single tag
+   *
+   * @param observation The pose observation to check
+   * @return Whether the observation has low ambiguity
+   */
+  public Boolean isUnambiguous(PoseObservation observation) {
     boolean pass = true;
     if (observation.tagCount() == 1) {
       pass = observation.ambiguity() < maxAmbiguity;
@@ -260,6 +257,13 @@ public class Vision extends SubsystemBase {
     return pass;
   }
 
+  /**
+   * We assume that the robot is constrained to an orientation that is flat on the field. Rejects
+   * poses that exceed pitch, roll, and elevation tolerances.
+   *
+   * @param observation The pose observation to check
+   * @return Whether the observation's pose is flat on the floor
+   */
   public Boolean isPoseFlat(PoseObservation observation) {
     boolean pass =
         Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
@@ -270,6 +274,12 @@ public class Vision extends SubsystemBase {
     return pass;
   }
 
+  /**
+   * Rejects poses that, when projected to the floor, lie outside of the field boundaries
+   *
+   * @param observation The pose observation to check
+   * @return Whether the observation is within the field boundaries
+   */
   public Boolean isWithinBoundaries(PoseObservation observation) {
     boolean pass =
         observation.pose().getX() > 0.0
@@ -281,6 +291,12 @@ public class Vision extends SubsystemBase {
     return pass;
   }
 
+  /**
+   * Rejects observations where no tags were detected
+   *
+   * @param observation The pose observation to check
+   * @return Whether the observation has more than zero tags
+   */
   public Boolean moreThanZeroTags(PoseObservation observation) {
     boolean pass = observation.tagCount() > 0;
 
