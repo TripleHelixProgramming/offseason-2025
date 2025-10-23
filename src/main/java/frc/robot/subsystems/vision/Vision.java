@@ -92,8 +92,8 @@ public class Vision extends SubsystemBase {
     var allRobotPosesAccepted = new ArrayList<Pose3d>();
     var allRobotPosesRejected = new ArrayList<Pose3d>();
 
-    // List to store acceptable observations along with their calculated standard deviations
-    var acceptableObservations = new ArrayList<ObservationWithStdDev>();
+    // List to store acceptable observations
+    var acceptableObservations = new ArrayList<ObservationWithCameraIndex>();
 
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -144,36 +144,12 @@ public class Vision extends SubsystemBase {
         robotPoses.add(observation.pose());
         if (acceptPose) {
           robotPosesAccepted.add(observation.pose());
+          acceptableObservations.add(new ObservationWithCameraIndex(observation, cameraIndex));
         } else {
           robotPosesRejected.add(observation.pose());
         }
 
         cameraPassRate[cameraIndex].calculate(acceptPose ? 1.0 : 0.0);
-
-        // Skip if rejected
-        if (!acceptPose) {
-          continue;
-        }
-
-        // Calculate standard deviations
-        double stdDevFactor =
-            (observation.averageTagDistance() * observation.averageTagDistance())
-                / observation.tagCount();
-        double linearStdDev = linearStdDevBaseline * stdDevFactor;
-        double angularStdDev = angularStdDevBaseline * stdDevFactor;
-        if (observation.type() == PoseObservationType.MEGATAG_2) {
-          linearStdDev *= linearStdDevMegatag2Factor;
-          angularStdDev *= angularStdDevMegatag2Factor;
-        }
-        if (cameraIndex < cameraStdDevFactors.length) {
-          linearStdDev *= cameraStdDevFactors[cameraIndex];
-          angularStdDev *= cameraStdDevFactors[cameraIndex];
-        }
-
-        // Pair the observation with its standard deviations and add it to the list
-        acceptableObservations.add(
-            new ObservationWithStdDev(
-                observation, VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev)));
       }
 
       // Log camera datadata
@@ -202,11 +178,27 @@ public class Vision extends SubsystemBase {
     acceptableObservations.sort(Comparator.comparingDouble(o -> o.observation.timestamp()));
 
     // Send sorted vision observations to the pose estimator
-    for (ObservationWithStdDev obsWithStdDev : acceptableObservations) {
+    for (var o : acceptableObservations) {
+      // Calculate standard deviations
+      double stdDevFactor =
+          (o.observation.averageTagDistance() * o.observation.averageTagDistance())
+              / o.observation.tagCount();
+      double linearStdDev = linearStdDevBaseline * stdDevFactor;
+      double angularStdDev = angularStdDevBaseline * stdDevFactor;
+      if (o.observation.type() == PoseObservationType.MEGATAG_2) {
+        linearStdDev *= linearStdDevMegatag2Factor;
+        angularStdDev *= angularStdDevMegatag2Factor;
+      }
+      if (o.cameraIndex < cameraStdDevFactors.length) {
+        linearStdDev *= cameraStdDevFactors[o.cameraIndex];
+        angularStdDev *= cameraStdDevFactors[o.cameraIndex];
+      }
+
+      // Send to consumer
       consumer.accept(
-          obsWithStdDev.observation.pose().toPose2d(),
-          obsWithStdDev.observation.timestamp(),
-          obsWithStdDev.stdDevs);
+          o.observation.pose().toPose2d(),
+          o.observation.timestamp(),
+          VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
     }
 
     // Log summary data
@@ -233,8 +225,8 @@ public class Vision extends SubsystemBase {
         Matrix<N3, N1> visionMeasurementStdDevs);
   }
 
-  // Associate observations with their standard deviations
-  public static record ObservationWithStdDev(PoseObservation observation, Matrix<N3, N1> stdDevs) {}
+  // Associate observations with their camera
+  public static record ObservationWithCameraIndex(PoseObservation observation, int cameraIndex) {}
 
   // Caching for AprilTag layout
   public static AprilTagFieldLayout cachedLayout = null;
