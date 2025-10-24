@@ -47,10 +47,11 @@ public class VisionConstants {
    * (0 being no ambiguity, and 1 meaning both have the same reprojection error). Numbers above 0.2
    * are likely to be ambiguous.
    */
-//   public static double maxAmbiguity = 0.3;
+  //   public static double maxAmbiguity = 0.3;
 
   // Pose filtering thresholds
   public static Distance maxZError = Meters.of(0.75);
+
   public static Angle maxRollError = Degrees.of(30);
   public static Angle maxPitchError = Degrees.of(30);
   public static Distance maxTravelDistance =
