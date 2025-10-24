@@ -116,26 +116,27 @@ public class Vision extends SubsystemBase {
 
       // Loop over pose observations
       for (var observation : inputs[cameraIndex].poseObservations) {
-        EnumMap<VisionTest, Boolean> testResults = new EnumMap<>(VisionTest.class);
+        EnumMap<VisionTest, Double> testResults = new EnumMap<>(VisionTest.class);
 
         testResults.put(VisionTest.moreThanZeroTags, VisionTest.moreThanZeroTags.test(observation));
         testResults.put(VisionTest.unambiguous, VisionTest.unambiguous.test(observation));
         testResults.put(VisionTest.flatOrientation, VisionTest.flatOrientation.test(observation));
         testResults.put(VisionTest.withinBoundaries, VisionTest.withinBoundaries.test(observation));
 
-        observations.add(new TestedObservation(observation, cameraIndex, testResults));
+        Double score =
+            testResults.values().stream().reduce(1.0, (subtotal, element) -> subtotal * element);
 
-        boolean acceptPose = testResults.values().stream().allMatch(result -> result);
+        observations.add(new TestedObservation(observation, cameraIndex, testResults, score));
 
         // Add pose to log
         robotPoses.add(observation.pose());
-        if (acceptPose) {
-          robotPosesAccepted.add(observation.pose());
-        } else {
+        if (score < minScore) {
           robotPosesRejected.add(observation.pose());
+        } else {
+          robotPosesAccepted.add(observation.pose());
         }
 
-        cameraPassRate[cameraIndex].calculate(acceptPose ? 1.0 : 0.0);
+        cameraPassRate[cameraIndex].calculate(score);
       }
 
       // Log camera datadata
@@ -161,7 +162,7 @@ public class Vision extends SubsystemBase {
     }
 
     // Remove unacceptable observations
-    observations.removeIf(o -> !o.testResults.values().stream().allMatch(result -> result));
+    observations.removeIf(o -> o.score < minScore);
 
     // Sort the list of acceptable observations by timestamp
     observations.sort(
@@ -170,7 +171,8 @@ public class Vision extends SubsystemBase {
     for (var o : observations) {
       // Calculate standard deviations
       double stdDevFactor =
-          (o.observation.averageTagDistance() * o.observation.averageTagDistance())
+          o.score
+              * (o.observation.averageTagDistance() * o.observation.averageTagDistance())
               / o.observation.tagCount();
       double linearStdDev = linearStdDevBaseline * stdDevFactor;
       double angularStdDev = angularStdDevBaseline * stdDevFactor;
@@ -217,7 +219,10 @@ public class Vision extends SubsystemBase {
 
   // Associate observations with their camera
   public static record TestedObservation(
-      PoseObservation observation, int cameraIndex, EnumMap<VisionTest, Boolean> testResults) {}
+      PoseObservation observation,
+      int cameraIndex,
+      EnumMap<VisionTest, Double> testResults,
+      double score) {}
 
   // Caching for AprilTag layout
   public static AprilTagFieldLayout cachedLayout = null;
@@ -244,76 +249,69 @@ public class Vision extends SubsystemBase {
   public enum VisionTest {
     unambiguous {
       /**
-       * Rejects high-ambiguity observations of a single tag
+       * Penalizes ambiguous observations of a single tag
        *
        * @param observation The pose observation to check
-       * @return Whether the observation has low ambiguity
+       * @return Ambiguity score (1 - ambiguity) for single-tag observations, 1.0 for multi-tag
        */
       @Override
-      public boolean test(PoseObservation observation) {
-        boolean pass = true;
+      public double test(PoseObservation observation) {
         if (observation.tagCount() == 1) {
-          pass = observation.ambiguity() < maxAmbiguity;
+          return 1 - observation.ambiguity();
+        } else {
+          return 1.0;
         }
-
-        // ambiguityTestPassRate.calculate(pass ? 1.0 : 0.0);
-        return pass;
       }
     },
     flatOrientation {
       /**
        * We assume that the robot is constrained to an orientation that is flat on the field.
-       * Rejects poses that exceed pitch, roll, and elevation tolerances.
+       * Penalizes poses that exceed pitch, roll, and elevation tolerances.
        *
        * @param observation The pose observation to check
-       * @return Whether the observation's pose is flat on the floor
+       * @return Score of 1.0 if within tolerances, 0.0 otherwise
        */
       @Override
-      public boolean test(PoseObservation observation) {
+      public double test(PoseObservation observation) {
         boolean pass =
             Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
                 && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
                 && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
 
-        // flatPoseTestPassRate.calculate(pass ? 1.0 : 0.0);
-        return pass;
+        return (pass ? 1.0 : 0.0);
       }
     },
     withinBoundaries {
       /**
-       * Rejects poses that, when projected to the floor, lie outside of the field boundaries
+       * Penalizes poses that, when projected to the floor, lie outside of the field boundaries
        *
        * @param observation The pose observation to check
-       * @return Whether the observation is within the field boundaries
+       * @return Score of 1.0 if within field boundary, 0.0 otherwise
        */
       @Override
-      public boolean test(PoseObservation observation) {
+      public double test(PoseObservation observation) {
         boolean pass =
             observation.pose().getX() > 0.0
                 && observation.pose().getX() < getAprilTagLayout().getFieldLength()
                 && observation.pose().getY() > 0.0
                 && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
 
-        // withinBoundsTestPassRate.calculate(pass ? 1.0 : 0.0);
-        return pass;
+        return (pass ? 1.0 : 0.0);
       }
     },
     moreThanZeroTags {
       /**
-       * Rejects observations where no tags were detected
+       * Penalizes observations that see zero tags
        *
        * @param observation The pose observation to check
-       * @return Whether the observation has more than zero tags
+       * @return 1.0 if more than zero tags, 0.0 otherwise
        */
       @Override
-      public boolean test(PoseObservation observation) {
-        boolean pass = observation.tagCount() > 0;
-
-        // moreThanZeroTagsTestPassRate.calculate(pass ? 1.0 : 0.0);
-        return pass;
+      public double test(PoseObservation observation) {
+        return Math.min(observation.tagCount(), 1.0);
       }
     };
 
-    public abstract boolean test(PoseObservation observation);
+    public abstract double test(PoseObservation observation);
   }
 }

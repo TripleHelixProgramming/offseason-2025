@@ -40,12 +40,14 @@ public class VisionConstants {
   public static Transform3d robotToBackLeftCamera =
       new Transform3d(-0.252, 0.341, 0.628, new Rotation3d(0, 0, 1.972));
 
+  public static double minScore = 0.3;
+
   /**
    * the ratio of best:alternate pose reprojection errors, called ambiguity. This is between 0 and 1
    * (0 being no ambiguity, and 1 meaning both have the same reprojection error). Numbers above 0.2
    * are likely to be ambiguous.
    */
-  public static double maxAmbiguity = 0.3;
+//   public static double maxAmbiguity = 0.3;
 
   // Pose filtering thresholds
   public static Distance maxZError = Meters.of(0.75);
