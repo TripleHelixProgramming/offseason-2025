@@ -125,6 +125,7 @@ public class Vision extends SubsystemBase {
         testResults.put(VisionTest.rollError, VisionTest.rollError.test(observation));
         testResults.put(VisionTest.heightError, VisionTest.heightError.test(observation));
         testResults.put(VisionTest.withinBoundaries, VisionTest.withinBoundaries.test(observation));
+        testResults.put(VisionTest.distanceToTags, VisionTest.distanceToTags.test(observation));
 
         Double totalScore =
             testResults.values().stream().reduce(1.0, (subtotal, element) -> subtotal * element);
