@@ -40,40 +40,20 @@ public class VisionConstants {
   public static Transform3d robotToBackLeftCamera =
       new Transform3d(-0.252, 0.341, 0.628, new Rotation3d(0, 0, 1.972));
 
-  public static double minScore = 0.3;
-
-  /**
-   * the ratio of best:alternate pose reprojection errors, called ambiguity. This is between 0 and 1
-   * (0 being no ambiguity, and 1 meaning both have the same reprojection error). Numbers above 0.2
-   * are likely to be ambiguous.
-   */
-  //   public static double maxAmbiguity = 0.3;
+  public static double minRobotWidthMeters = Inches.of(36.875).in(Meters);
 
   // Pose filtering thresholds
-  public static Distance maxZError = Meters.of(0.75);
+  public static double minScore = 0.3;
 
-  public static Angle maxRollError = Degrees.of(30);
-  public static Angle maxPitchError = Degrees.of(30);
+  public static double ambiguityTolerance = 0.3;
+
+  public static Distance elevationTolerance = Meters.of(0.75);
+  public static Angle rollTolerance = Degrees.of(30);
+  public static Angle pitchTolerance = Degrees.of(30);
   public static Distance maxTravelDistance =
       DriveConstants.maxDriveSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
 
-  // Standard deviation baselines, for 1 meter distance and 1 tag
-  // (Adjusted automatically based on distance and # of tags)
+  // Standard deviation baselines
   public static double linearStdDevBaseline = 0.02; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
-
-  // Standard deviation multipliers for each camera
-  // (Adjust to trust some cameras more than others)
-  public static double[] cameraStdDevFactors =
-      new double[] {
-        1.0, // Front Right
-        1.0, // Front Left
-        1.0, // Back Right
-        1.0 // Back Left
-      };
-
-  // Multipliers to apply for MegaTag 2 observations
-  public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
-  public static double angularStdDevMegatag2Factor =
-      Double.POSITIVE_INFINITY; // No rotation data available
 }

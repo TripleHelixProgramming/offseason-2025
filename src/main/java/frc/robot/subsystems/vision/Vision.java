@@ -16,7 +16,9 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.LinearFilter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
@@ -24,7 +26,6 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
-import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -120,23 +121,25 @@ public class Vision extends SubsystemBase {
 
         testResults.put(VisionTest.moreThanZeroTags, VisionTest.moreThanZeroTags.test(observation));
         testResults.put(VisionTest.unambiguous, VisionTest.unambiguous.test(observation));
-        testResults.put(VisionTest.flatOrientation, VisionTest.flatOrientation.test(observation));
+        testResults.put(VisionTest.pitchError, VisionTest.pitchError.test(observation));
+        testResults.put(VisionTest.rollError, VisionTest.rollError.test(observation));
+        testResults.put(VisionTest.heightError, VisionTest.heightError.test(observation));
         testResults.put(VisionTest.withinBoundaries, VisionTest.withinBoundaries.test(observation));
 
-        Double score =
+        Double totalScore =
             testResults.values().stream().reduce(1.0, (subtotal, element) -> subtotal * element);
 
-        observations.add(new TestedObservation(observation, cameraIndex, testResults, score));
+        observations.add(new TestedObservation(observation, cameraIndex, testResults, totalScore));
 
         // Add pose to log
         robotPoses.add(observation.pose());
-        if (score < minScore) {
+        if (totalScore < minScore) {
           robotPosesRejected.add(observation.pose());
         } else {
           robotPosesAccepted.add(observation.pose());
         }
 
-        cameraPassRate[cameraIndex].calculate(score);
+        cameraPassRate[cameraIndex].calculate(totalScore);
       }
 
       // Log camera datadata
@@ -170,19 +173,8 @@ public class Vision extends SubsystemBase {
 
     for (var o : observations) {
       // Calculate standard deviations
-      double stdDevFactor =
-          (o.observation.averageTagDistance() * o.observation.averageTagDistance())
-              / o.observation.tagCount();
-      double linearStdDev = linearStdDevBaseline * stdDevFactor;
-      double angularStdDev = angularStdDevBaseline * stdDevFactor;
-      if (o.observation.type() == PoseObservationType.MEGATAG_2) {
-        linearStdDev *= linearStdDevMegatag2Factor;
-        angularStdDev *= angularStdDevMegatag2Factor;
-      }
-      if (o.cameraIndex < cameraStdDevFactors.length) {
-        linearStdDev *= cameraStdDevFactors[o.cameraIndex];
-        angularStdDev *= cameraStdDevFactors[o.cameraIndex];
-      }
+      double linearStdDev = linearStdDevBaseline / o.score;
+      double angularStdDev = angularStdDevBaseline / o.score;
 
       // Send acceptable vision observations to the pose estimator with their stddevs
       consumer.accept(
@@ -248,36 +240,63 @@ public class Vision extends SubsystemBase {
   public enum VisionTest {
     unambiguous {
       /**
-       * Penalizes ambiguous observations of a single tag
+       * Penalizes ambiguous observations of a single tag, where ambiguity is defined as the ratio
+       * of best:alternate pose reprojection errors. This is between 0 and 1 (0 being no ambiguity,
+       * and 1 meaning both have the same reprojection error). Numbers above 0.2 are likely to be
+       * ambiguous.
        *
        * @param observation The pose observation to check
-       * @return Ambiguity score (1 - ambiguity) for single-tag observations, 1.0 for multi-tag
+       * @return Score between 0 and 1
        */
       @Override
       public double test(PoseObservation observation) {
         if (observation.tagCount() == 1) {
-          return 1 - observation.ambiguity();
+          return normalizedSigmoid(1 - observation.ambiguity(), 1 - ambiguityTolerance, 1.0);
         } else {
           return 1.0;
         }
       }
     },
-    flatOrientation {
+    pitchError {
       /**
        * We assume that the robot is constrained to an orientation that is flat on the field.
-       * Penalizes poses that exceed pitch, roll, and elevation tolerances.
+       * Penalizes poses with significantly nonzero pitch.
        *
        * @param observation The pose observation to check
-       * @return Score of 1.0 if within tolerances, 0.0 otherwise
+       * @return Score between 0 and 1
        */
       @Override
       public double test(PoseObservation observation) {
-        boolean pass =
-            Math.abs(observation.pose().getZ()) < maxZError.in(Meters)
-                && Math.abs(observation.pose().getRotation().getX()) < maxRollError.in(Radians)
-                && Math.abs(observation.pose().getRotation().getY()) < maxPitchError.in(Radians);
-
-        return (pass ? 1.0 : 0.0);
+        return normalizedSigmoid(
+            Math.abs(observation.pose().getRotation().getY()), pitchTolerance.in(Radians), 1.0);
+      }
+    },
+    rollError {
+      /**
+       * We assume that the robot is constrained to an orientation that is flat on the field.
+       * Penalizes poses with significantly nonzero roll.
+       *
+       * @param observation The pose observation to check
+       * @return Score between 0 and 1
+       */
+      @Override
+      public double test(PoseObservation observation) {
+        return normalizedSigmoid(
+            Math.abs(observation.pose().getRotation().getX()), rollTolerance.in(Radians), 1.0);
+      }
+    },
+    heightError {
+      /**
+       * We assume that the robot is constrained to an orientation that is flat on the field.
+       * Penalizes poses with significantly nonzero elevation.
+       *
+       * @param observation The pose observation to check
+       * @return Score between 0 and 1
+       */
+      @Override
+      public double test(PoseObservation observation) {
+        return normalizedSigmoid(
+            Math.abs(observation.pose().getZ()), elevationTolerance.in(Meters), 1.0);
       }
     },
     withinBoundaries {
@@ -285,15 +304,17 @@ public class Vision extends SubsystemBase {
        * Penalizes poses that, when projected to the floor, lie outside of the field boundaries
        *
        * @param observation The pose observation to check
-       * @return Score of 1.0 if within field boundary, 0.0 otherwise
+       * @return Score between 0 and 1
        */
       @Override
       public double test(PoseObservation observation) {
-        boolean pass =
-            observation.pose().getX() > 0.0
-                && observation.pose().getX() < getAprilTagLayout().getFieldLength()
-                && observation.pose().getY() > 0.0
-                && observation.pose().getY() < getAprilTagLayout().getFieldWidth();
+        var corner1 = new Translation2d(minRobotWidthMeters / 2.0, minRobotWidthMeters / 2.0);
+        var corner2 =
+            new Translation2d(
+                getAprilTagLayout().getFieldLength() - minRobotWidthMeters / 2.0,
+                getAprilTagLayout().getFieldWidth() - minRobotWidthMeters / 2.0);
+        var arena = new Rectangle2d(corner1, corner2);
+        boolean pass = arena.contains(observation.pose().toPose2d().getTranslation());
 
         return (pass ? 1.0 : 0.0);
       }
@@ -303,14 +324,47 @@ public class Vision extends SubsystemBase {
        * Penalizes observations that see zero tags
        *
        * @param observation The pose observation to check
-       * @return 1.0 if more than zero tags, 0.0 otherwise
+       * @return Score between 0 and 1
        */
       @Override
       public double test(PoseObservation observation) {
         return Math.min(observation.tagCount(), 1.0);
       }
+    },
+    distanceToTags {
+      /**
+       * Rewards observations that see tags closer to the robot
+       *
+       * @param observation The pose observation to check
+       * @return Score between 0 and 1
+       */
+      @Override
+      public double test(PoseObservation observation) {
+        double avgDistance = observation.averageTagDistance();
+        // Assuming max relevant distance is 5 meters
+        return normalizedSigmoid(5.0 - avgDistance, 2.5, 1.0);
+      }
     };
 
     public abstract double test(PoseObservation observation);
+  }
+
+  /**
+   * Calculates a normalized sigmoid function with a tunable midpoint and steepness. The output is
+   * always between 0 and 1.
+   *
+   * @param x The input value.
+   * @param midpoint The x-value where the output should be 0.5.
+   * @param steepness The factor controlling the curve's steepness. Higher values result in a
+   *     steeper curve, lower values result in a more gradual curve. Must be greater than 0.
+   * @return The sigmoid output for the given input, between 0 and 1.
+   */
+  public static double normalizedSigmoid(double x, double midpoint, double steepness) {
+    if (steepness <= 0) {
+      throw new IllegalArgumentException("Steepness must be a positive value.");
+    }
+
+    double exponent = -steepness * (x - midpoint);
+    return 1.0 / (1.0 + Math.exp(exponent));
   }
 }
