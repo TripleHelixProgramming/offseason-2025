@@ -251,7 +251,7 @@ public class Vision extends SubsystemBase {
       @Override
       public double test(PoseObservation observation) {
         if (observation.tagCount() == 1) {
-          return normalizedSigmoid(1 - observation.ambiguity(), 1 - ambiguityTolerance, 1.0);
+          return 1.0 - normalizedSigmoid(observation.ambiguity(), ambiguityTolerance, 1.0);
         } else {
           return 1.0;
         }
@@ -267,8 +267,9 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        return normalizedSigmoid(
-            Math.abs(observation.pose().getRotation().getY()), pitchTolerance.in(Radians), 1.0);
+        return 1.0
+            - normalizedSigmoid(
+                Math.abs(observation.pose().getRotation().getY()), pitchTolerance.in(Radians), 1.0);
       }
     },
     rollError {
@@ -281,8 +282,9 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        return normalizedSigmoid(
-            Math.abs(observation.pose().getRotation().getX()), rollTolerance.in(Radians), 1.0);
+        return 1.0
+            - normalizedSigmoid(
+                Math.abs(observation.pose().getRotation().getX()), rollTolerance.in(Radians), 1.0);
       }
     },
     heightError {
@@ -295,8 +297,9 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        return normalizedSigmoid(
-            Math.abs(observation.pose().getZ()), elevationTolerance.in(Meters), 1.0);
+        return 1.0
+            - normalizedSigmoid(
+                Math.abs(observation.pose().getZ()), elevationTolerance.in(Meters), 1.0);
       }
     },
     withinBoundaries {
@@ -308,12 +311,12 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        var corner1 = new Translation2d(minRobotWidthMeters / 2.0, minRobotWidthMeters / 2.0);
-        var corner2 =
+        var cornerA = new Translation2d(minRobotWidth.div(2.0), minRobotWidth.div(2.0));
+        var cornerB =
             new Translation2d(
-                getAprilTagLayout().getFieldLength() - minRobotWidthMeters / 2.0,
-                getAprilTagLayout().getFieldWidth() - minRobotWidthMeters / 2.0);
-        var arena = new Rectangle2d(corner1, corner2);
+                    getAprilTagLayout().getFieldLength(), getAprilTagLayout().getFieldWidth())
+                .minus(cornerA);
+        var arena = new Rectangle2d(cornerA, cornerB);
         boolean pass = arena.contains(observation.pose().toPose2d().getTranslation());
 
         return (pass ? 1.0 : 0.0);
@@ -340,9 +343,9 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        double avgDistance = observation.averageTagDistance();
-        // Assuming max relevant distance is 5 meters
-        return normalizedSigmoid(5.0 - avgDistance, 2.5, 1.0);
+        return 1.0
+            - normalizedSigmoid(
+                observation.averageTagDistance(), tagDistanceTolerance.in(Meters), 1.0);
       }
     };
 

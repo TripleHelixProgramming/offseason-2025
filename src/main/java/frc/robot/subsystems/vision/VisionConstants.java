@@ -40,12 +40,13 @@ public class VisionConstants {
   public static Transform3d robotToBackLeftCamera =
       new Transform3d(-0.252, 0.341, 0.628, new Rotation3d(0, 0, 1.972));
 
-  public static double minRobotWidthMeters = Inches.of(36.875).in(Meters);
+  public static Distance minRobotWidth = Inches.of(36.875);
 
   // Pose filtering thresholds
   public static double minScore = 0.3;
 
   public static double ambiguityTolerance = 0.3;
+  public static Distance tagDistanceTolerance = Meters.of(1.0);
 
   public static Distance elevationTolerance = Meters.of(0.75);
   public static Angle rollTolerance = Degrees.of(30);
