@@ -182,6 +182,8 @@ public class Vision extends SubsystemBase {
           o.observation.pose().toPose2d(),
           o.observation.timestamp(),
           VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+
+      Logger.recordOutput("Vision/Summary/ObservationScore", o.score);
     }
 
     // Log summary data
@@ -252,7 +254,7 @@ public class Vision extends SubsystemBase {
       @Override
       public double test(PoseObservation observation) {
         if (observation.tagCount() == 1) {
-          return 1.0 - normalizedSigmoid(observation.ambiguity(), ambiguityTolerance, 1.0);
+          return 1.0 - normalizedSigmoid(observation.ambiguity(), ambiguityTolerance, 4.0);
         } else {
           return 1.0;
         }

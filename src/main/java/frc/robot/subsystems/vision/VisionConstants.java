@@ -43,10 +43,8 @@ public class VisionConstants {
   public static Distance minRobotWidth = Inches.of(36.875);
 
   // Pose filtering thresholds
-  public static double minScore = 0.3;
-
-  public static double ambiguityTolerance = 0.3;
-  public static Distance tagDistanceTolerance = Meters.of(1.0);
+  public static double ambiguityTolerance = 0.15;
+  public static Distance tagDistanceTolerance = Meters.of(2.0);
 
   public static Distance elevationTolerance = Meters.of(0.75);
   public static Angle rollTolerance = Degrees.of(30);
@@ -57,4 +55,7 @@ public class VisionConstants {
   // Standard deviation baselines
   public static double linearStdDevBaseline = 0.02; // Meters
   public static double angularStdDevBaseline = 0.06; // Radians
+
+  public static double maxStdDev = 1.0; // Meters
+  public static double minScore = linearStdDevBaseline / maxStdDev;
 }
