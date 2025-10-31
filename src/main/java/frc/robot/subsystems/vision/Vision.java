@@ -135,9 +135,9 @@ public class Vision extends SubsystemBase {
         // Add pose to log
         robotPoses.add(observation.pose());
         if (totalScore < minScore) {
-          robotPosesRejected.add(observation.pose());
-        } else {
           robotPosesAccepted.add(observation.pose());
+        } else {
+          robotPosesRejected.add(observation.pose());
         }
 
         cameraPassRate[cameraIndex].calculate(totalScore);
