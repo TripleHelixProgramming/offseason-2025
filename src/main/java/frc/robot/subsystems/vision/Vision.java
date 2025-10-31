@@ -39,11 +39,6 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
 
-  // LinearFilter ambiguityTestPassRate = LinearFilter.movingAverage(20);
-  // LinearFilter flatPoseTestPassRate = LinearFilter.movingAverage(20);
-  // LinearFilter withinBoundsTestPassRate = LinearFilter.movingAverage(20);
-  // LinearFilter moreThanZeroTagsTestPassRate = LinearFilter.movingAverage(20);
-
   LinearFilter[] cameraPassRate = {
     LinearFilter.movingAverage(20),
     LinearFilter.movingAverage(20),
@@ -193,14 +188,6 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(Pose3d[]::new));
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
-
-    // Logger.recordOutput("Vision/Summary/AmbiguityTestPassRate",
-    // ambiguityTestPassRate.lastValue());
-    // Logger.recordOutput("Vision/Summary/FlatPoseTestPassRate", flatPoseTestPassRate.lastValue());
-    // Logger.recordOutput(
-    //     "Vision/Summary/WithinBoundsTestPassRate", withinBoundsTestPassRate.lastValue());
-    // Logger.recordOutput(
-    //     "Vision/Summary/MoreThanZeroTagsTestPassRate", moreThanZeroTagsTestPassRate.lastValue());
   }
 
   @FunctionalInterface
