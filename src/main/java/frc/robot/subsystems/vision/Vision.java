@@ -24,20 +24,24 @@ import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
-  private final VisionConsumer consumer;
+  private final ObservationConsumer observationConsumer;
+  private final Consumer<Pose2d> poseConsumer;
   private final Supplier<Pose2d> poseSupplier;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+  private Boolean firstVisionEstimate = true;
 
   LinearFilter[] cameraPassRate = {
     LinearFilter.movingAverage(20),
@@ -46,8 +50,9 @@ public class Vision extends SubsystemBase {
     LinearFilter.movingAverage(20)
   };
 
-  public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
-    this.consumer = consumer;
+  public Vision(ObservationConsumer observationConsumer, Consumer<Pose2d> poseConsumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
+    this.observationConsumer = observationConsumer;
+    this.poseConsumer = poseConsumer;
     this.poseSupplier = poseSupplier;
     this.io = io;
 
@@ -172,8 +177,14 @@ public class Vision extends SubsystemBase {
       double linearStdDev = linearStdDevBaseline / o.score;
       double angularStdDev = angularStdDevBaseline / o.score;
 
+      // Teleport the odometry to the first vision estimate
+      if (firstVisionEstimate && RobotState.isDisabled()) {
+        poseConsumer.accept(o.observation.pose().toPose2d());
+        firstVisionEstimate = false;
+      }
+
       // Send acceptable vision observations to the pose estimator with their stddevs
-      consumer.accept(
+      observationConsumer.accept(
           o.observation.pose().toPose2d(),
           o.observation.timestamp(),
           VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
@@ -191,7 +202,7 @@ public class Vision extends SubsystemBase {
   }
 
   @FunctionalInterface
-  public static interface VisionConsumer {
+  public static interface ObservationConsumer {
     public void accept(
         Pose2d visionRobotPoseMeters,
         double timestampSeconds,
@@ -336,6 +347,26 @@ public class Vision extends SubsystemBase {
         return 1.0
             - normalizedSigmoid(
                 observation.averageTagDistance(), tagDistanceTolerance.in(Meters), 1.0);
+      }
+    },
+    distanceTraveled {
+      /**
+       * Rewards observations that are closer to the current robot pose
+       *
+       * @param observation The pose observation to check
+       * @return Score between 0 and 1
+       */
+      @Override
+      public double test(PoseObservation observation) {
+        if (firstVisionEstimate) {
+          return 1.0;
+        } else {
+          return 1.0
+          - normalizedSigmoid(
+              observation.pose().toPose2d().getDistance(poseSupplier.get()),
+              travelDistanceTolerance.in(Meters),
+              1.0);
+        }
       }
     };
 

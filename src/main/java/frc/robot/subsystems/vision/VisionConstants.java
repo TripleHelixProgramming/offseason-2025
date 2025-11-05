@@ -49,7 +49,7 @@ public class VisionConstants {
   public static Distance elevationTolerance = Meters.of(0.75);
   public static Angle rollTolerance = Degrees.of(30);
   public static Angle pitchTolerance = Degrees.of(30);
-  public static Distance maxTravelDistance =
+  public static Distance travelDistanceTolerance =
       DriveConstants.maxDriveSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
 
   // Standard deviation baselines
