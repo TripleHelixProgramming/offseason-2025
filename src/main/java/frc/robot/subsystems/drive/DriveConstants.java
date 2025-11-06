@@ -86,6 +86,7 @@ public class DriveConstants {
   // Device CAN IDs
   public static final int gyroCanId = 0;
 
+  //TODO: check CAN IDs for correctness
   public static final int backLeftDriveCanId = 10;
   public static final int backRightDriveCanId = 18;
   public static final int frontRightDriveCanId = 20;
