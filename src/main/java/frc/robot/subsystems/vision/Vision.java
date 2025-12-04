@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rectangle2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
@@ -41,14 +42,9 @@ public class Vision extends SubsystemBase {
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
-  private Boolean firstVisionEstimate = true;
+  private final LinearFilter[] cameraPassRate;
 
-  LinearFilter[] cameraPassRate = {
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20)
-  };
+  private boolean firstVisionEstimate = true;
 
   public Vision(ObservationConsumer observationConsumer, Consumer<Pose2d> poseConsumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
     this.observationConsumer = observationConsumer;
@@ -69,6 +65,15 @@ public class Vision extends SubsystemBase {
           new Alert(
               "Vision camera " + Integer.toString(i) + " is disconnected.", AlertType.kWarning);
     }
+
+    // Initialize camera pass rate filters
+    this.cameraPassRate = new LinearFilter[io.length];
+    for (int i = 0; i < io.length; i++) {
+      this.cameraPassRate[i] = LinearFilter.movingAverage(20);
+    }
+
+    // Set static instance for vision tests
+    VisionTest.setVisionInstance(this);
   }
 
   /**
@@ -358,17 +363,30 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        if (firstVisionEstimate) {
+        if (visionInstance.firstVisionEstimate) {
           return 1.0;
         } else {
+          var visionPose = observation.pose().toPose2d();
+          var fusedPose = visionInstance.poseSupplier.get();
+          var distanceMeters = new Transform2d(visionPose, fusedPose).getTranslation().getNorm();
           return 1.0
           - normalizedSigmoid(
-              observation.pose().toPose2d().getDistance(poseSupplier.get()),
+              distanceMeters,
               travelDistanceTolerance.in(Meters),
               1.0);
         }
       }
     };
+
+    public static Vision visionInstance;
+
+    public static void setVisionInstance(Vision vision) {
+      visionInstance = vision;
+    }
+
+    public static Vision getVisionInstance() {
+      return visionInstance;
+    }
 
     public abstract double test(PoseObservation observation);
   }
