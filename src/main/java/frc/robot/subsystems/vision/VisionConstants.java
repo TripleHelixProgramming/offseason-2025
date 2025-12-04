@@ -20,7 +20,8 @@ import frc.robot.subsystems.drive.DriveConstants;
 
 public class VisionConstants {
 
-  public static String customAprilTagLayoutPath = Filesystem.getDeployDirectory() + "/stemgym.json";
+  public static String customAprilTagLayoutPath =
+      Filesystem.getDeployDirectory() + "/stemgym-2026.json";
   public static Boolean useCustomAprilTagLayout = true;
   public static AprilTagFields defaultAprilTagFieldLayout = AprilTagFields.k2025ReefscapeAndyMark;
 
@@ -44,11 +45,11 @@ public class VisionConstants {
 
   // Pose filtering thresholds
   public static double ambiguityTolerance = 0.15;
-  public static Distance tagDistanceTolerance = Meters.of(2.0);
+  public static Distance tagDistanceTolerance = Meters.of(4.0);
 
-  public static Distance elevationTolerance = Meters.of(0.75);
-  public static Angle rollTolerance = Degrees.of(30);
-  public static Angle pitchTolerance = Degrees.of(30);
+  public static Distance elevationTolerance = Meters.of(0.25);
+  public static Angle rollTolerance = Degrees.of(5);
+  public static Angle pitchTolerance = Degrees.of(5);
   public static Distance travelDistanceTolerance =
       DriveConstants.maxDriveSpeed.times(Seconds.of(Robot.defaultPeriodSecs));
 
