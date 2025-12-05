@@ -263,6 +263,7 @@ public class Vision extends SubsystemBase {
     return cachedLayout;
   }
 
+  // TODO: Stability of the odometry belongs in the Drive class
   public void updatePoseStability() {
     Pose2d currentPose = poseSupplier.get();
 
@@ -405,6 +406,7 @@ public class Vision extends SubsystemBase {
           var visionPose = observation.pose().toPose2d();
           var odometryPose = visionInstance.poseSupplier.get();
           var distanceMeters = new Transform2d(visionPose, odometryPose).getTranslation().getNorm();
+          // TODO: Allow travel distance tolerance to grow as a function of time since last accepted vision estimate
           return 1.0 - normalizedSigmoid(distanceMeters, travelDistanceTolerance.in(Meters), 1.0);
         }
       }
