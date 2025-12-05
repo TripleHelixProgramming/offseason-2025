@@ -43,10 +43,17 @@ public class Vision extends SubsystemBase {
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
   private final LinearFilter[] cameraPassRate;
+  private final LinearFilter poseChangeMovingAvg = LinearFilter.movingAverage(20);
 
   private boolean firstVisionEstimate = true;
+  private boolean poseStable = false;
+  private Pose2d lastPose = new Pose2d();
 
-  public Vision(ObservationConsumer observationConsumer, Consumer<Pose2d> poseConsumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
+  public Vision(
+      ObservationConsumer observationConsumer,
+      Consumer<Pose2d> poseConsumer,
+      Supplier<Pose2d> poseSupplier,
+      VisionIO... io) {
     this.observationConsumer = observationConsumer;
     this.poseConsumer = poseConsumer;
     this.poseSupplier = poseSupplier;
@@ -74,6 +81,12 @@ public class Vision extends SubsystemBase {
 
     // Set static instance for vision tests
     VisionTest.setVisionInstance(this);
+
+    // Initialize pose stability
+    for (int i = 0; i < 20; i++) {
+      poseChangeMovingAvg.calculate(8.0);
+    }
+    // poseChangeMovingAvg.reset(DoubleStream.generate(() -> 10.0).limit(20).toArray(), null);
   }
 
   /**
@@ -87,6 +100,7 @@ public class Vision extends SubsystemBase {
 
   @Override
   public void periodic() {
+    // Update inputs
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
@@ -100,6 +114,9 @@ public class Vision extends SubsystemBase {
 
     // List to store acceptable observations
     var observations = new ArrayList<TestedObservation>();
+
+    // Update pose stability
+    updatePoseStability();
 
     // Loop over cameras
     for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
@@ -131,6 +148,7 @@ public class Vision extends SubsystemBase {
         testResults.put(VisionTest.heightError, VisionTest.heightError.test(observation));
         testResults.put(VisionTest.withinBoundaries, VisionTest.withinBoundaries.test(observation));
         testResults.put(VisionTest.distanceToTags, VisionTest.distanceToTags.test(observation));
+        testResults.put(VisionTest.distanceTraveled, VisionTest.distanceTraveled.test(observation));
 
         Double totalScore =
             testResults.values().stream().reduce(1.0, (subtotal, element) -> subtotal * element);
@@ -182,7 +200,7 @@ public class Vision extends SubsystemBase {
       double linearStdDev = linearStdDevBaseline / o.score;
       double angularStdDev = angularStdDevBaseline / o.score;
 
-      // Teleport the odometry to the first vision estimate
+      // Teleport the odometry to the location of the first vision estimate
       if (firstVisionEstimate && RobotState.isDisabled()) {
         poseConsumer.accept(o.observation.pose().toPose2d());
         firstVisionEstimate = false;
@@ -204,6 +222,8 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(Pose3d[]::new));
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
+    Logger.recordOutput("Vision/Summary/PoseChange", poseChangeMovingAvg.lastValue());
+    Logger.recordOutput("Vision/Summary/Stable", poseStable);
   }
 
   @FunctionalInterface
@@ -241,6 +261,22 @@ public class Vision extends SubsystemBase {
       }
     }
     return cachedLayout;
+  }
+
+  public void updatePoseStability() {
+    Pose2d currentPose = poseSupplier.get();
+
+    // Calculate the translation change since the last update
+    var translationChangeMeters =
+        currentPose.getTranslation().minus(lastPose.getTranslation()).getNorm();
+
+    // Check whether the fused pose is stable
+    if (!poseStable && poseChangeMovingAvg.calculate(translationChangeMeters) < 0.01) {
+      poseStable = true;
+    }
+
+    // Update the previous fused pose
+    lastPose = currentPose;
   }
 
   public enum VisionTest {
@@ -363,17 +399,13 @@ public class Vision extends SubsystemBase {
        */
       @Override
       public double test(PoseObservation observation) {
-        if (visionInstance.firstVisionEstimate) {
+        if (!visionInstance.poseStable) {
           return 1.0;
         } else {
           var visionPose = observation.pose().toPose2d();
-          var fusedPose = visionInstance.poseSupplier.get();
-          var distanceMeters = new Transform2d(visionPose, fusedPose).getTranslation().getNorm();
-          return 1.0
-          - normalizedSigmoid(
-              distanceMeters,
-              travelDistanceTolerance.in(Meters),
-              1.0);
+          var odometryPose = visionInstance.poseSupplier.get();
+          var distanceMeters = new Transform2d(visionPose, odometryPose).getTranslation().getNorm();
+          return 1.0 - normalizedSigmoid(distanceMeters, travelDistanceTolerance.in(Meters), 1.0);
         }
       }
     };
