@@ -8,9 +8,8 @@
 package frc.robot.subsystems.vision;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.filter.LinearFilter;
@@ -21,49 +20,97 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.vision.VisionIO.PoseObservation;
+import frc.robot.subsystems.vision.io.VisionIO.PoseObservation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.function.Supplier;
+import java.util.List;
 import org.littletonrobotics.junction.Logger;
 
 public class Vision extends SubsystemBase {
-  private final VisionConsumer consumer;
-  private final Supplier<Pose2d> poseSupplier;
-  private final VisionIO[] io;
-  private final VisionIOInputsAutoLogged[] inputs;
+
+  public static final Distance minRobotWidth = Inches.of(36.875);
+  public static final double ambiguityTolerance = 0.15;
+  public static final Distance tagDistanceTolerance = Meters.of(4.0);
+  public static final Distance elevationTolerance = Meters.of(0.25);
+  public static final Angle rollTolerance = Degrees.of(5);
+  public static final Angle pitchTolerance = Degrees.of(5);
+  public static final String customAprilTagLayoutPath = Filesystem.getDeployDirectory() + "/stemgym-2026.json";
+  public static final Boolean useCustomAprilTagLayout = true;
+  public static final AprilTagFields defaultAprilTagFieldLayout = AprilTagFields.k2025ReefscapeAndyMark;
+  public static final double linearStdDevBaseline = 0.02; // Meters
+  public static final double angularStdDevBaseline = 0.06; // Radians
+  public static final double maxStdDev = 1.0; // Meters
+  public static double minScore = linearStdDevBaseline / maxStdDev;
+
+  private static Vision instance;
+  private final List<VisionConsumer> consumers = new ArrayList<>();
   private final Alert[] disconnectedAlerts;
+  LinearFilter[] cameraPassRate;
 
-  LinearFilter[] cameraPassRate = {
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20),
-    LinearFilter.movingAverage(20)
-  };
-
-  public Vision(VisionConsumer consumer, Supplier<Pose2d> poseSupplier, VisionIO... io) {
-    this.consumer = consumer;
-    this.poseSupplier = poseSupplier;
-    this.io = io;
-
-    // Initialize inputs
-    this.inputs = new VisionIOInputsAutoLogged[io.length];
-    for (int i = 0; i < inputs.length; i++) {
-      inputs[i] = new VisionIOInputsAutoLogged();
+  /** Initializes the Vision subsystem singleton. */
+  public static void initialize() {
+    if (instance == null) {
+      getInstance();
     }
+  }
 
+  /** Returns the singleton instance of the Vision subsystem. */
+  public static Vision getInstance() {
+    if (instance == null) {
+      instance = new Vision();
+    }
+    return instance;
+  }
+
+  private Vision() {
     // Initialize disconnected alerts
-    this.disconnectedAlerts = new Alert[io.length];
-    for (int i = 0; i < inputs.length; i++) {
-      disconnectedAlerts[i] =
-          new Alert(
-              "Vision camera " + Integer.toString(i) + " is disconnected.", AlertType.kWarning);
+    this.disconnectedAlerts = new Alert[Camera.values().length];
+    this.cameraPassRate = new LinearFilter[Camera.values().length];
+    for (Camera camera : Camera.values()) {
+      disconnectedAlerts[camera.ordinal()] =
+          new Alert("Vision camera " + camera.name() + " is disconnected.", AlertType.kWarning);
+      cameraPassRate[camera.ordinal()] = LinearFilter.movingAverage(20);
     }
+  }
+
+  /** A functional interface for consuming vision pose estimations. */
+  @FunctionalInterface
+  public static interface VisionConsumer {
+    /**
+     * Accepts a vision measurement.
+     *
+     * @param visionRobotPoseMeters The estimated robot pose in meters.
+     * @param timestampSeconds The timestamp of the measurement in seconds.
+     * @param visionMeasurementStdDevs The standard deviations of the measurement.
+     */
+    public void accept(
+        Pose2d visionRobotPoseMeters,
+        double timestampSeconds,
+        Matrix<N3, N1> visionMeasurementStdDevs);
+  }
+
+  /**
+   * Adds a new consumer to the list of vision consumers.
+   *
+   * @param consumer The consumer to add.
+   */
+  public void addConsumer(VisionConsumer consumer) {
+    consumers.add(consumer);
+  }
+
+  /**
+   * Removes a consumer from the list of vision consumers. @param consumer The consumer to remove.
+   */
+  public void removeConsumer(VisionConsumer consumer) {
+    consumers.remove(consumer);
   }
 
   /**
@@ -72,14 +119,14 @@ public class Vision extends SubsystemBase {
    * @param cameraIndex The index of the camera to use.
    */
   public Rotation2d getTargetX(int cameraIndex) {
-    return inputs[cameraIndex].latestTargetObservation.tx();
+    return Camera.values()[cameraIndex].inputs.latestTargetObservation.tx();
   }
 
   @Override
   public void periodic() {
-    for (int i = 0; i < io.length; i++) {
-      io[i].updateInputs(inputs[i]);
-      Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
+    for (Camera camera : Camera.values()) {
+      camera.updateInputs();
+      Logger.processInputs("Vision/Camera." + camera.name(), camera.inputs);
     }
 
     // Initialize logging values
@@ -92,9 +139,9 @@ public class Vision extends SubsystemBase {
     var observations = new ArrayList<TestedObservation>();
 
     // Loop over cameras
-    for (int cameraIndex = 0; cameraIndex < io.length; cameraIndex++) {
+    for (Camera camera : Camera.values()) {
       // Update disconnected alert
-      disconnectedAlerts[cameraIndex].set(!inputs[cameraIndex].connected);
+      disconnectedAlerts[camera.ordinal()].set(!camera.inputs.connected);
 
       // Initialize logging values
       var tagPoses = new ArrayList<Pose3d>();
@@ -103,7 +150,7 @@ public class Vision extends SubsystemBase {
       var robotPosesRejected = new ArrayList<Pose3d>();
 
       // Add tag poses
-      for (int tagId : inputs[cameraIndex].tagIds) {
+      for (int tagId : camera.inputs.tagIds) {
         var tagPose = getAprilTagLayout().getTagPose(tagId);
         if (tagPose.isPresent()) {
           tagPoses.add(tagPose.get());
@@ -111,7 +158,7 @@ public class Vision extends SubsystemBase {
       }
 
       // Loop over pose observations
-      for (var observation : inputs[cameraIndex].poseObservations) {
+      for (var observation : camera.inputs.poseObservations) {
         EnumMap<VisionTest, Double> testResults = new EnumMap<>(VisionTest.class);
 
         testResults.put(VisionTest.moreThanZeroTags, VisionTest.moreThanZeroTags.test(observation));
@@ -125,7 +172,7 @@ public class Vision extends SubsystemBase {
         Double totalScore =
             testResults.values().stream().reduce(1.0, (subtotal, element) -> subtotal * element);
 
-        observations.add(new TestedObservation(observation, cameraIndex, testResults, totalScore));
+        observations.add(new TestedObservation(observation, camera, testResults, totalScore));
 
         // Add pose to log
         robotPoses.add(observation.pose());
@@ -135,25 +182,25 @@ public class Vision extends SubsystemBase {
           robotPosesRejected.add(observation.pose());
         }
 
-        cameraPassRate[cameraIndex].calculate(totalScore);
+        cameraPassRate[camera.ordinal()].calculate(totalScore);
       }
 
       // Log camera datadata
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
+          "Vision/Camera." + camera.name() + "/TagPoses",
           tagPoses.toArray(new Pose3d[tagPoses.size()]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPoses",
+          "Vision/Camera." + camera.name() + "/RobotPoses",
           robotPoses.toArray(new Pose3d[robotPoses.size()]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesAccepted",
+          "Vision/Camera." + camera.name() + "/RobotPosesAccepted",
           robotPosesAccepted.toArray(new Pose3d[robotPosesAccepted.size()]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
+          "Vision/Camera." + camera.name() + "/RobotPosesRejected",
           robotPosesRejected.toArray(new Pose3d[robotPosesRejected.size()]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/PassRate",
-          cameraPassRate[cameraIndex].lastValue());
+          "Vision/Camera." + camera.name() + "/PassRate",
+          cameraPassRate[camera.ordinal()].lastValue());
       allTagPoses.addAll(tagPoses);
       allRobotPoses.addAll(robotPoses);
       allRobotPosesAccepted.addAll(robotPosesAccepted);
@@ -173,10 +220,10 @@ public class Vision extends SubsystemBase {
       double angularStdDev = angularStdDevBaseline / o.score;
 
       // Send acceptable vision observations to the pose estimator with their stddevs
-      consumer.accept(
-          o.observation.pose().toPose2d(),
-          o.observation.timestamp(),
-          VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
+      consumers.forEach(c -> c.accept(
+        o.observation.pose().toPose2d(),
+        o.observation.timestamp(),
+        VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev)));
 
       Logger.recordOutput("Vision/Summary/ObservationScore", o.score);
     }
@@ -187,21 +234,13 @@ public class Vision extends SubsystemBase {
     Logger.recordOutput(
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(Pose3d[]::new));
     Logger.recordOutput(
-        "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(Pose3d[]::new));
-  }
-
-  @FunctionalInterface
-  public static interface VisionConsumer {
-    public void accept(
-        Pose2d visionRobotPoseMeters,
-        double timestampSeconds,
-        Matrix<N3, N1> visionMeasurementStdDevs);
+        "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
   }
 
   // Associate observations with their camera
   public static record TestedObservation(
       PoseObservation observation,
-      int cameraIndex,
+      Camera camera,
       EnumMap<VisionTest, Double> testResults,
       double score) {}
 
