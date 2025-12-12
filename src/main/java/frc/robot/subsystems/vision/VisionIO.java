@@ -16,7 +16,7 @@ public interface VisionIO {
   public static class VisionIOInputs {
     public boolean connected = false;
     public TargetObservation latestTargetObservation =
-        new TargetObservation(Rotation2d.kZero, Rotation2d.kZero, Rotation2d.kZero, 0, 0, 0);
+        new TargetObservation(Rotation2d.kZero, Rotation2d.kZero, Rotation2d.kZero, 0, -1, -1);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
   }
@@ -27,7 +27,7 @@ public interface VisionIO {
       Rotation2d pitch,
       Rotation2d skew,
       double area,
-      float confidince,
+      float confidence,
       int objectID) {}
 
   /** Represents a robot pose sample used for pose estimation. */

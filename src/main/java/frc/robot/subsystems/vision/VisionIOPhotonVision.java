@@ -54,7 +54,7 @@ public class VisionIOPhotonVision implements VisionIO {
                 bestTarget.getDetectedObjectClassID());
       } else {
         inputs.latestTargetObservation =
-            new TargetObservation(Rotation2d.kZero, Rotation2d.kZero, Rotation2d.kZero, 0, 0, 0);
+            new TargetObservation(Rotation2d.kZero, Rotation2d.kZero, Rotation2d.kZero, 0, -1, -1);
       }
 
       // Add pose observation
