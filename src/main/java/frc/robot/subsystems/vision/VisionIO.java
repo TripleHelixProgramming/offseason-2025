@@ -9,14 +9,14 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import java.util.Optional;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface VisionIO {
   @AutoLog
   public static class VisionIOInputs {
     public boolean connected = false;
-    public Optional<TargetObservation> latestTargetObservation = Optional.empty();
+    public TargetObservation latestTargetObservation =
+        new TargetObservation(Rotation2d.kZero, Rotation2d.kZero, Rotation2d.kZero, 0, 0, 0);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
   }
